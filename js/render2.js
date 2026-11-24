@@ -216,7 +216,7 @@
     const dx = p.x - e.x, dy = p.y - e.y;
     const flip = dx < 0 ? -1 : 1;
     const facingAway = dy < -6;
-    const dim = facingAway ? 0.30 : 0;
+    const dim = facingAway ? 0.12 : 0;
 
     // 动画：走路上下颠 + 左右轻微倾斜 + 攻击/受伤挤压
     const walk = e.animWalk || 0;
@@ -292,7 +292,7 @@
     const ax = Math.cos(p.angle), ay = Math.sin(p.angle);
     const flip = ax < 0 ? -1 : 1;
     const facingAway = ay < -0.35;
-    const dim = facingAway ? 0.28 : 0;
+    const dim = facingAway ? 0.10 : 0;
 
     const moveT = p.walked || 0;
     const bob = Math.sin(moveT * 0.12) * 2.2;
