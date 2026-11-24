@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>sprite sheet</title>
+<style>
+  body { background:#1b1b23; color:#ddd; font:12px monospace; margin:0; padding:12px; }
+  h3 { margin:14px 0 6px; font-size:13px; color:#9ad; }
+  .row { display:flex; flex-wrap:wrap; gap:10px; }
+  figure { margin:0; text-align:center; }
+  canvas { image-rendering: pixelated; background:#2b2b35; border:1px solid #444; }
+  figcaption { margin-top:2px; font-size:10px; color:#aab; }
+</style>
+</head>
+<body>
+<div id="out"></div>
+<script src="../js/pixel.js"></script>
+<script>
+  const P = MCX.PX;
+  const out = document.getElementById('out');
+  const SC = 4;
+
+  function section(title) {
+    const h = document.createElement('h3'); h.textContent = title; out.appendChild(h);
+    const r = document.createElement('div'); r.className = 'row'; out.appendChild(r); return r;
+  }
+  function show(parent, src, label, scale) {
+    const f = document.createElement('figure');
+    const c = document.createElement('canvas');
+    c.width = src.width * scale; c.height = src.height * scale;
+    const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+    x.drawImage(src, 0, 0, c.width, c.height);
+    f.appendChild(c);
+    const cap = document.createElement('figcaption'); cap.textContent = label; f.appendChild(cap);
+    parent.appendChild(f);
+  }
+
+  const mats = Object.keys(P.MAT);
+  let r = section('ingot');
+  mats.forEach(m => show(r, P.itemSpec(['ingot', m]), m, SC));
+  r = section('gem');
+  mats.forEach(m => show(r, P.itemSpec(['gem', m]), m, SC));
+  r = section('nugget / dust');
+  mats.forEach(m => { show(r, P.itemSpec(['nugget', m]), m, SC); show(r, P.itemSpec(['dust', m]), 'd.' + m, SC); });
+
+  r = section('weapons');
+  ['sword:iron','sword:diamond','sword:netherite','sword:gold','sword:coal','pickaxe:iron','pickaxe:diamond',
+   'axe_item:iron','bow','crossbow','arrow','shield_item','torch'].forEach(k => show(r, P.itemSpec(k.split(':')), k, SC));
+
+  r = section('supplies');
+  ['apple','golden_apple','bread','potion_heal','potion_speed','potion_str','chest','tnt','pearl','bone','string',
+   'flesh','gunpowder','spider_eye','scrap','coin','heart'].forEach(k => show(r, P.itemSpec(k), k, SC));
+
+  r = section('armor & bags');
+  ['chestplate_leather','chestplate_iron','chestplate_diamond','bag_leather','bag_big','bag_shulker'].forEach(k => show(r, P.itemSpec(k), k, SC));
+
+  r = section('mobs (2x)');
+  Object.keys(P.mobArt).forEach(m => show(r, P.mob(m), m, 3));
+
+  r = section('tiles (32px)');
+  ['grass','stone','planks','cobble','deepslate','netherrack','gravel','water','mossy','wall_stone','wall_deepslate','wall_netherrack','wall_grass','ore_diamond','ore_gold','ore_iron','ore_coal','ore_emerald','ore_netherite','ore_redstone','ore_lapis','ore_quartz','portal','bedrock'].forEach(t => show(r, P.tile(t), t, 2));
+
+  r = section('decor');
+  ['flower','pebble','crack','mushroom'].forEach((k, i) => show(r, P.decor(i, k), k, 4));
+
+  document.title = 'SHEET-OK';
+</script>
+</body>
+</html>

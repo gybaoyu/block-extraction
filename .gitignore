@@ -1,0 +1,5 @@
+# 临时产物
+tools/*.png
+*.log
+.DS_Store
+Thumbs.db

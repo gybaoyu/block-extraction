@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="description" content="MC 风格俯视角搜打撤 H5 游戏：带装备进地牢，搜矿物、打怪物、掐着倒计时撤离。" />
+<title>方块撤离 · MC 搜打撤</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="app">
+  <canvas id="cv" width="960" height="540"></canvas>
+
+  <!-- ============ 基地 ============ -->
+  <div id="s-base" class="screen">
+    <div class="topbar">
+      <div class="brand">
+        <span class="logo">方块撤离</span>
+        <span class="sub">MC 搜打撤 · BLOCK EXTRACTION</span>
+      </div>
+      <div class="spacer"></div>
+      <div class="pill" title="绿宝石：出售战利品获得">
+        <img class="ico" alt="" data-ico="coin" />
+        <b id="ui-emerald">0</b>
+      </div>
+      <div class="pill" id="ui-stats">—</div>
+      <button class="mc" id="btn-help">玩法</button>
+      <button class="mc" id="btn-mute">音效：开</button>
+      <button class="mc danger" id="btn-reset">清空存档</button>
+    </div>
+    <div class="grid3">
+      <section class="panel" id="p-loadout"></section>
+      <section class="panel" id="p-stash"></section>
+      <section class="panel" id="p-shop"></section>
+    </div>
+  </div>
+
+  <!-- ============ 地图选择 ============ -->
+  <div id="s-map" class="screen hidden">
+    <div class="modal">
+      <h2>选择战场</h2>
+      <p class="dim">带的装备死了就没了。想清楚再进。</p>
+      <div id="map-list" class="map-list"></div>
+      <div class="row end"><button class="mc" id="btn-map-back">返回基地</button></div>
+    </div>
+  </div>
+
+  <!-- ============ 结算 ============ -->
+  <div id="s-result" class="screen hidden">
+    <div class="modal" id="result-box"></div>
+  </div>
+
+  <!-- ============ 局内背包 ============ -->
+  <div id="s-inv" class="screen hidden">
+    <div class="modal wide" id="inv-box"></div>
+  </div>
+
+  <!-- ============ 选择器 ============ -->
+  <div id="s-pick" class="screen hidden">
+    <div class="modal wide" id="pick-box"></div>
+  </div>
+
+  <!-- ============ 帮助 ============ -->
+  <div id="s-help" class="screen hidden">
+    <div class="modal wide" id="help-box"></div>
+  </div>
+
+  <div id="toasts"></div>
+  <div id="rotate-hint">请横屏游玩</div>
+  <div id="bootlog" hidden></div>
+</div>
+
+<script>
+  window.addEventListener('error', function (e) {
+    var log = document.getElementById('bootlog');
+    if (!log) return;
+    log.hidden = false;
+    log.textContent += '[ERR] ' + (e.message || e) + ' @' + (e.filename || '') + ':' + (e.lineno || 0) + '\n';
+    document.title = 'BOOT-ERROR: ' + (e.message || e);
+  });
+</script>
+<script src="js/pixel.js"></script>
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/world.js"></script>
+<script src="js/entity.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+<script src="js/smoke.js"></script>
+</body>
+</html>
