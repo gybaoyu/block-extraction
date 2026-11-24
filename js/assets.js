@@ -87,6 +87,9 @@ MCX.ASSETS = {
     wither: 'assets/tex/face_wither.png',
     zombie: 'assets/tex/face_zombie.png',
   },
+  skins: {
+    player: 'assets/tex/skin_player.png',
+  },
   mobs: {
     blaze: 'assets/tex/mob_blaze.png',
     creeper: 'assets/tex/mob_creeper.png',

@@ -1066,7 +1066,7 @@
    * 官方素材覆盖层（Minecraft Wiki · zh.minecraft.wiki）
    * 成功加载 assets/tex/*.png 就覆盖程序化像素图；任意一张失败自动回退
    * ============================================================ */
-  P.assets = { items: {}, tiles: {}, mobs: {}, faces: {} };
+  P.assets = { items: {}, tiles: {}, mobs: {}, faces: {}, skins: {} };
   P.mobStyle = '3d';
   P.assetCount = 0;
   const assetURLs = new Map();
@@ -1096,7 +1096,9 @@
           const img = new Image();
           img.onload = () => {
             try {
-              if (bucket === 'mobs') {
+              if (bucket === 'skins') {
+                P.assets.skins[key] = toCanvas(img, img.width, img.height);
+              } else if (bucket === 'mobs') {
                 const th = MOB_H[key] || 44;
                 const tw = Math.max(10, Math.round((img.width * th) / img.height));
                 P.assets.mobs[key] = toCanvas(img, tw, th, true);
@@ -1115,6 +1117,7 @@
     load(man.items, 'items');
     load(man.tiles, 'tiles');
     load(man.faces, 'faces');
+    load(man.skins, 'skins');
     load(man.mobs, 'mobs');
     Promise.all(tasks).then(finish, finish);
   };

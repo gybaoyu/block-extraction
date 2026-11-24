@@ -314,19 +314,22 @@
     const sx = 1 + punch * 0.18 + (1 - stepping) * 0.03;
     const sy = 1 - punch * 0.10 - (1 - stepping) * 0.02 + stepping * 0.02;
 
-    ctx.save();
-    ctx.translate(Math.round(sBase.x), Math.round(sBase.y + bob));
-    ctx.rotate(lean);
-    ctx.scale(flip * sx * wScale, sy);
-    ctx.transform(1, 0, -0.10 * fc, 1, 0, 0);
-    ctx.drawImage(img, -w / 2, -h, w, h);
-    if (dim > 0) {
-      ctx.globalCompositeOperation = 'source-atop';
-      ctx.fillStyle = 'rgba(0,0,0,' + dim + ')';
-      ctx.fillRect(-w / 2, -h, w, h);
-      ctx.globalCompositeOperation = 'source-over';
+    const usedPuppet = MCX.Puppet && MCX.Puppet.drawPlayer(ctx, g, p, sBase);
+    if (!usedPuppet) {
+      ctx.save();
+      ctx.translate(Math.round(sBase.x), Math.round(sBase.y + bob));
+      ctx.rotate(lean);
+      ctx.scale(flip * sx * wScale, sy);
+      ctx.transform(1, 0, -0.10 * fc, 1, 0, 0);
+      ctx.drawImage(img, -w / 2, -h, w, h);
+      if (dim > 0) {
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = 'rgba(0,0,0,' + dim + ')';
+        ctx.fillRect(-w / 2, -h, w, h);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+      ctx.restore();
     }
-    ctx.restore();
 
     // 手上的武器：按瞄准方向伸出，挥砍时扫一个弧
     const wId = p.weapon && p.weapon.id;
