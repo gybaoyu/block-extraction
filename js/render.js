@@ -474,17 +474,24 @@
     const perHeart = Math.max(2, Math.ceil(p.maxHp / 20) * 2);
     const heartCount = Math.ceil(p.maxHp / perHeart);
     let heartsPerRow = 10;
+    // 血条：仿 MC，居中放在快捷栏正上方
+    const barSlot = 40, barGap = 3, barN = 4;
+    const barW = barN * barSlot + (barN - 1) * barGap;
+    const barX = W / 2 - barW / 2;
+    const barY = H - barSlot - 20;
+    const heartSpacing = 20;
+    const hx0 = W / 2 - (heartsPerRow * heartSpacing) / 2;
+    const hy0 = barY - 42;
     for (let i = 0; i < heartCount; i++) {
       const row = Math.floor(i / heartsPerRow);
       const col = i % heartsPerRow;
-      const hx = 12 + col * 20;
-      const hy = 12 + row * 18;
+      const hx = hx0 + col * heartSpacing;
+      const hy = hy0 + row * 20;
       const hpIn = E.clamp(p.hp - i * perHeart, 0, perHeart);
-      heartPath(ctx, hx, hy, s, 'rgba(0,0,0,0.45)');
+      heartPath(ctx, hx, hy, s, 'rgba(0,0,0,0.55)');
       if (hpIn > 0) {
         if (hpIn >= perHeart * 0.5) heartPath(ctx, hx, hy, s, '#e02b2b');
         if (hpIn >= perHeart * 0.5 && hpIn < perHeart) {
-          // 半颗
           ctx.save();
           ctx.beginPath(); ctx.rect(hx, hy, 9, 8);
           ctx.clip();
@@ -493,15 +500,11 @@
         }
       }
     }
-    // 护甲 + 状态
-    let sy = 12 + Math.ceil(heartCount / 10) * 18 + 4;
-    if (p.armor) {
-      ctx.drawImage(P.item(p.armor.id), 12, sy, 16, 16);
-      text(ctx, p.armor.name, 32, sy + 13, 11, '#9ad8ff');
-      sy += 20;
-    }
-    if (p.buffs.speed > 0) { text(ctx, '迅捷 ' + p.buffs.speed.toFixed(0) + 's', 12, sy + 10, 11, '#4ad8e8'); sy += 15; }
-    if (p.buffs.str > 0) { text(ctx, '力量 ' + p.buffs.str.toFixed(0) + 's', 12, sy + 10, 11, '#d86ae8'); sy += 15; }
+    // 护甲图标 + buff，放在血条左侧
+    if (p.armor) ctx.drawImage(P.item(p.armor.id), hx0 - 42, hy0 - 4, 24, 24);
+    let byy = hy0 - 22;
+    if (p.buffs.speed > 0) { text(ctx, '迅捷 ' + p.buffs.speed.toFixed(0) + 's', hx0 - 42, byy, 12, '#4ad8e8'); byy -= 16; }
+    if (p.buffs.str > 0) { text(ctx, '力量 ' + p.buffs.str.toFixed(0) + 's', hx0 - 42, byy, 12, '#d86ae8'); byy -= 16; }
 
     // 计时
     const tleft = Math.max(0, g.world.timeLeft - g.time);
@@ -555,42 +558,42 @@
     // Boss 血条（只在交战时显示）
     const boss = g.enemies.find((e) => e.def.boss && !e.dead && e.aggro);
     if (boss) {
-      const bw = 420;
+      const bw = 460;
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.fillRect(W / 2 - bw / 2, H - 34, bw, 16);
+      ctx.fillRect(W / 2 - bw / 2, H - 200, bw, 18);
       ctx.fillStyle = '#a24ae8';
-      ctx.fillRect(W / 2 - bw / 2 + 2, H - 32, (bw - 4) * E.clamp(boss.hp / boss.maxHp, 0, 1), 12);
-      text(ctx, '凋灵 ' + Math.max(0, Math.ceil(boss.hp)) + '/' + boss.maxHp, W / 2, H - 22, 12, '#ffffff', 'center');
+      ctx.fillRect(W / 2 - bw / 2 + 2, H - 198, (bw - 4) * E.clamp(boss.hp / boss.maxHp, 0, 1), 14);
+      text(ctx, '凋灵 ' + Math.max(0, Math.ceil(boss.hp)) + '/' + boss.maxHp, W / 2, H - 187, 13, '#ffffff', 'center');
     }
 
-    // 武器 + 快捷道具
-    const bx = 12, by = H - 76;
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(bx, by, 190, 64);
+    // 快捷栏（仿 MC，居中底部）：武器 + 3 个快捷道具
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(barX - 6, barY - 6, barW + 12, barSlot + 12);
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(barX - 6.5, barY - 6.5, barW + 13, barSlot + 13);
+
+    const slotItems = [p.weapon, p.quick[0], p.quick[1], p.quick[2]];
+    for (let i = 0; i < barN; i++) {
+      const x = barX + i * (barSlot + barGap), y = barY;
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fillRect(x, y, barSlot, barSlot);
+      ctx.strokeStyle = i === 0 ? 'rgba(255,226,120,0.6)' : 'rgba(255,255,255,0.22)';
+      ctx.strokeRect(x + 0.5, y + 0.5, barSlot - 1, barSlot - 1);
+      const it = slotItems[i];
+      if (it) ctx.drawImage(P.item(it.id), x + 11, y + 11, barSlot - 22, barSlot - 22);
+      if (i > 0) text(ctx, String(i), x + 4, y + 15, 12, '#cfcfcf');
+    }
     if (p.weapon) {
-      ctx.drawImage(P.item(p.weapon.id), bx + 4, by + 4, 28, 28);
-      text(ctx, p.weapon.name, bx + 36, by + 18, 12, '#ffffff');
-      text(ctx, '伤害 ' + Math.round(MCX.Ent.weaponDmg(p)), bx + 36, by + 34, 10, '#cfcfcf');
-    }
-    for (let i = 0; i < 3; i++) {
-      const qx = bx + 120 + i * 22, qy = by + 6;
-      ctx.fillStyle = 'rgba(255,255,255,0.10)';
-      ctx.fillRect(qx, qy, 20, 20);
-      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-      ctx.strokeRect(qx + 0.5, qy + 0.5, 19, 19);
-      if (p.quick[i]) {
-        ctx.drawImage(P.item(p.quick[i].id), qx + 2, qy + 2, 16, 16);
-        text(ctx, String(i + 1), qx + 1, qy + 34, 9, '#cfcfcf');
-      }
+      text(ctx, p.weapon.name + ' · 伤害 ' + Math.round(MCX.Ent.weaponDmg(p)), W / 2, barY - 12, 13, '#ffffff', 'center');
     }
 
-    // 背包 使用 状态
+    // 背包 / 价值（右下角，小字）
     const used = MCX.Ent.invUsed(p);
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(W - 156, H - 46, 144, 34);
-    text(ctx, '背包 ' + used + '/' + p.slots, W - 146, H - 24, 12, used >= p.slots ? '#ff5a4a' : '#ffffff');
-    text(ctx, '价值 ' + MCX.Ent.invValue(p), W - 146, H - 8, 11, '#9ad8ff');
-    text(ctx, '[Tab] 背包   [F] 用药', W - 146, H - 60, 10, 'rgba(255,255,255,0.5)');
+    ctx.fillRect(W - 190, H - 52, 178, 38);
+    text(ctx, '背包 ' + used + '/' + p.slots, W - 178, H - 30, 13, used >= p.slots ? '#ff5a4a' : '#ffffff');
+    text(ctx, '价值 ' + MCX.Ent.invValue(p), W - 178, H - 14, 12, '#9ad8ff');
 
     // 交互提示
     const it = MCX.Ent.findInteractable(g);

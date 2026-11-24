@@ -13,7 +13,7 @@
   const TILE = E.TILE;
 
   const WALL_H = 30;      // 立体方块高度（屏幕像素）
-  const BOX_H = 16;       // 木箱等小方块高度
+  const BOX_H = 30;       // 木箱等小方块高度
 
   const proj = (wx, wy) => E.Cam.projS(wx, wy);
   const proj2 = (wx, wy) => E.Cam.proj(wx, wy);
@@ -91,7 +91,7 @@
 
   /* ---------------- 主绘制 ---------------- */
   R.draw = function (ctx, g) {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.setTransform(E.SCALE || 1, 0, 0, E.SCALE || 1, 0, 0);
     ctx.fillStyle = '#07070b';
     ctx.fillRect(0, 0, E.W, E.H);
     if (!g || g.state !== 'raid') return;
@@ -314,8 +314,7 @@
     const sx = 1 + punch * 0.18 + (1 - stepping) * 0.03;
     const sy = 1 - punch * 0.10 - (1 - stepping) * 0.02 + stepping * 0.02;
 
-    const usedPuppet = MCX.Puppet && MCX.Puppet.drawPlayer(ctx, g, p, sBase);
-    if (!usedPuppet) {
+    {
       ctx.save();
       ctx.translate(Math.round(sBase.x), Math.round(sBase.y + bob));
       ctx.rotate(lean);
