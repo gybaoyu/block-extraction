@@ -1,5 +1,6 @@
 /* ============================================================
- * 素材清单：来自 Minecraft Wiki（zh.minecraft.wiki）的官方 16×16 贴图与实体渲染图
+ * 素材清单：来自 Minecraft Wiki（zh.minecraft.wiki）的 16×16 贴图与实体头像
+ * items 物品图标 / tiles 方块贴图 / faces 生物头像（拼 2D 小人用）/ mobs 3D 渲染图（?style=3d 时启用）
  * 缺图时游戏自动回退到程序化像素图，不会白屏
  * ============================================================ */
 window.MCX = window.MCX || {};
@@ -75,6 +76,16 @@ MCX.ASSETS = {
     stone: 'assets/tex/tile_stone.png',
     wall_deepslate: 'assets/tex/tile_wall_deepslate.png',
     wall_stone: 'assets/tex/tile_wall_stone.png',
+  },
+  faces: {
+    blaze: 'assets/tex/face_blaze.png',
+    creeper: 'assets/tex/face_creeper.png',
+    enderman: 'assets/tex/face_enderman.png',
+    skeleton: 'assets/tex/face_skeleton.png',
+    slime: 'assets/tex/face_slime.png',
+    spider: 'assets/tex/face_spider.png',
+    wither: 'assets/tex/face_wither.png',
+    zombie: 'assets/tex/face_zombie.png',
   },
   mobs: {
     blaze: 'assets/tex/mob_blaze.png',

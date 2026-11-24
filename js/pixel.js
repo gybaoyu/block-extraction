@@ -824,6 +824,21 @@
     return c;
   };
 
+  // 墙脚向下的投影（正面下方）
+  let shadowBottomCache = null;
+  P.shadowBottom = () => {
+    if (shadowBottomCache) return shadowBottomCache;
+    const c = mkCanvas(32, 10);
+    const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, 0, 10);
+    g.addColorStop(0, 'rgba(0,0,0,0.45)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g;
+    x.fillRect(0, 0, 32, 10);
+    shadowBottomCache = c;
+    return c;
+  };
+
   /* ---------------- 视口装饰：草花、碎石 ---------------- */
   P.decor = (seed, kind) => {
     const p = new Px(16, 16);
@@ -847,10 +862,212 @@
   };
 
   /* ============================================================
+   * 2D 像素小人：官方 16×16 头像 + 平板 Q 版身体
+   * （3D 渲染图只在 ?style=3d 时使用）
+   * ============================================================ */
+  const FACE_KEY = {
+    player: null, zombie: 'face_zombie', skeleton: 'face_skeleton', creeper: 'face_creeper',
+    spider: 'face_spider', slime: 'face_slime', enderman: 'face_enderman', blaze: 'face_blaze', wither: 'face_wither',
+  };
+
+  // 身体配色：[主色, 暗色, 辅色]
+  const CHIBI_PAL = {
+    player:   { t: '#2fa8a0', T: '#1d7a74', s: '#c69a6b', b: '#3a4a9a', o: '#2a2a2a' },
+    zombie:   { t: '#2f7a6a', T: '#1f564a', s: '#5a9e42', b: '#3a3a5a', o: '#2a2a2a' },
+    skeleton: { t: '#e8e8dc', T: '#c6c6ba', s: '#e8e8dc', b: '#e8e8dc', o: '#b8b8ac' },
+    creeper:  { g: '#4a9a3a', d: '#3a8a2a' },
+    spider:   { d: '#2a2a2e', e: '#ff4a4a' },
+    slime:    { g: '#6ad06a', d: '#4ab04a' },
+    enderman: { d: '#16161e', e: '#b06ae8' },
+    blaze:    { y: '#e8c84a', d: '#8a6a12' },
+    wither:   { d: '#2a2a2e', e: '#ff4a4a' },
+  };
+
+  // 16 宽 × 22 高；0~11 行留给头，12~21 行是身体
+  const CHIBI_BODY = {
+    player: [
+      '...tttttttttt...',
+      '..tttttttttttt..',
+      '..tttttttttttt..',
+      '..ssttttttttss..',
+      '....tttttttt....',
+      '....bbbbbbbb....',
+      '....bbb..bbb....',
+      '....bbb..bbb....',
+      '....ooo..ooo....',
+      '................',
+    ],
+    zombie: [
+      '...tttttttttt...',
+      '..tttttttttttt..',
+      '..tttttttttttt..',
+      '..ssttttttttss..',
+      '....tttttttt....',
+      '....bbbbbbbb....',
+      '....bbb..bbb....',
+      '....bbb..bbb....',
+      '....ooo..ooo....',
+      '................',
+    ],
+    skeleton: [
+      '...ssssssssss...',
+      '..ssssssssssss..',
+      '..s.sssssss.s...',
+      '..s..ssss..s....',
+      '....ssssssss....',
+      '....ssssssss....',
+      '....ss....ss....',
+      '....ss....ss....',
+      '....ooooo.......',
+      '................',
+    ],
+    creeper: [
+      '...gggggggggg...',
+      '..gggggggggggg..',
+      '..gggggggggggg..',
+      '..gggggggggggg..',
+      '..gggggggggggg..',
+      '..gggggggggggg..',
+      '..ggg..gg..ggg..',
+      '..ggg..gg..ggg..',
+      '..ggg......ggg..',
+      '................',
+    ],
+    spider: [
+      '....dddddddd....',
+      '..dddddddddddd..',
+      '.dd.dddddddd.dd.',
+      '.d..dddddddd..d.',
+      'd.d.dddddddd.d.d',
+      '.d..dddddddd..d.',
+      '..d.dddddddd.d..',
+      '....dddddddd....',
+      '................',
+      '................',
+    ],
+    slime: [
+      '....gggggggg....',
+      '...gggggggggg...',
+      '..gggggggggggg..',
+      '..gggggggggggg..',
+      '..gggggggggggg..',
+      '...gggggggggg...',
+      '....gggggggg....',
+      '................',
+      '................',
+      '................',
+    ],
+    enderman: [
+      '....dddddddd....',
+      '...dddddddddd...',
+      '...dddddddddd...',
+      '..dd.dddddd.dd..',
+      '..dd.dddddd.dd..',
+      '..d..dddddd..d..',
+      '....dddddddd....',
+      '....dddddddd....',
+      '....dd....dd....',
+      '....dd....dd....',
+    ],
+    blaze: [
+      '....yyyyyyyy....',
+      '...yyyyyyyyyy...',
+      '..y.yyyyyyyy.y..',
+      '..y.yyyyyyyy.y..',
+      '..y..yyyyyy..y..',
+      '.....yyyyyy.....',
+      '....yy....yy....',
+      '....dd....dd....',
+      '................',
+      '................',
+    ],
+    wither: [
+      '..dddddddddddd..',
+      '..dddddddddddd..',
+      '...dd.dddd.dd...',
+      '...dd.dddd.dd...',
+      '....dddddddd....',
+      '.....d.dd.d.....',
+      '.....dddddd.....',
+      '................',
+      '................',
+      '................',
+    ],
+  };
+
+  const chibiCache = new Map();
+  const faceCache = new Map();
+
+  // 玩家头像（10×10，程序化画的 Steve）
+  function steveFace() {
+    if (faceCache.has('player')) return faceCache.get('player');
+    const rows = [
+      'hhhhhhhhhh',
+      'hssssssssh',
+      'hssssssssh',
+      'hseesseesh',
+      'hseddddesh',
+      'hssssssssh',
+      'hssmmmsssh',
+      'hssssssssh',
+      'hssssssssh',
+      '.ssssssss.',
+    ];
+    const pal = { h: '#3a2a18', s: '#c69a6b', S: '#a87a4e', e: '#ffffff', d: '#2a4a8a', m: '#8a5a3a' };
+    const c = mkCanvas(10, 10);
+    const x = c.getContext('2d');
+    for (let y = 0; y < rows.length; y++) {
+      for (let i = 0; i < rows[y].length; i++) {
+        const col = pal[rows[y][i]];
+        if (col) { x.fillStyle = col; x.fillRect(i, y, 1, 1); }
+      }
+    }
+    faceCache.set('player', c);
+    return c;
+  }
+
+  P.chibi = function (name) {
+    if (chibiCache.has(name)) return chibiCache.get(name);
+    const pal = CHIBI_PAL[name] || CHIBI_PAL.zombie;
+    const body = CHIBI_BODY[name] || CHIBI_BODY.zombie;
+    const c = mkCanvas(16, 22);
+    const x = c.getContext('2d');
+    x.imageSmoothingEnabled = false;
+
+    // 身体
+    for (let r = 0; r < body.length; r++) {
+      const row = body[r];
+      for (let i = 0; i < row.length; i++) {
+        const ch = row[i];
+        if (!ch || ch === '.') continue;
+        const col = pal[ch];
+        if (col) { x.fillStyle = col; x.fillRect(i, 12 + r, 1, 1); }
+      }
+    }
+    // 头
+    const faceKey = FACE_KEY[name];
+    const face = faceKey ? P.assets.faces[faceKey] : steveFace();
+    if (face) {
+      x.imageSmoothingEnabled = false;
+      x.drawImage(face, 0, 0, face.width, face.height, 2, 0, 12, 12);
+    } else if (name === 'player') {
+      x.drawImage(steveFace(), 2, 1, 10, 10);
+    }
+    // 描边（底部阴影，增强立体感）
+    x.fillStyle = 'rgba(0,0,0,0.22)';
+    x.fillRect(2, 21, 12, 1);
+    // 放大 2 倍后返回，保持像素锐利
+    const out = toCanvas(c, 32, 44);
+    chibiCache.set(name, out);
+    return out;
+  };
+
+  /* ============================================================
    * 官方素材覆盖层（Minecraft Wiki · zh.minecraft.wiki）
    * 成功加载 assets/tex/*.png 就覆盖程序化像素图；任意一张失败自动回退
    * ============================================================ */
-  P.assets = { items: {}, tiles: {}, mobs: {} };
+  P.assets = { items: {}, tiles: {}, mobs: {}, faces: {} };
+  P.mobStyle = '2d';
   P.assetCount = 0;
   const assetURLs = new Map();
   const _itemSpec = P.itemSpec, _item = P.item, _itemURL = P.itemURL;
@@ -869,7 +1086,7 @@
 
   P.loadAssets = function (man, done) {
     const tasks = [];
-    const finish = () => { P.assetReady = true; if (done) done(); };
+    const finish = () => { P.assetReady = true; chibiCache.clear(); if (done) done(); };
     if (!man) { setTimeout(finish, 0); return; }
     const load = (map, bucket) => {
       if (!map) return;
@@ -896,6 +1113,7 @@
     };
     load(man.items, 'items');
     load(man.tiles, 'tiles');
+    load(man.faces, 'faces');
     load(man.mobs, 'mobs');
     Promise.all(tasks).then(finish, finish);
   };
@@ -919,7 +1137,38 @@
 
   P.wallVar = (wallName, v) => (P.assets.tiles[wallName] ? P.tile(wallName) : _wallVar(wallName, v));
 
-  P.mob = (name) => (P.assets.mobs[name] ? P.assets.mobs[name] : _mob(name));
+  // 墙体正面（侧面）贴图：原生比例裁一段，压暗 + 上沿高光 + 墙脚暗边
+  const wallFaceCache = new Map();
+  P.wallFace = (wallName, h) => {
+    const H = h || 28;
+    const key = wallName + ':' + H;
+    if (wallFaceCache.has(key)) return wallFaceCache.get(key);
+    const top = P.tile(wallName);
+    const c = mkCanvas(32, H);
+    const x = c.getContext('2d');
+    x.imageSmoothingEnabled = false;
+    // 竖向拉伸铺满（砖块看起来是立起来的墙面）
+    x.drawImage(top, 0, 0, 32, 32, 0, 0, 32, H);
+    x.fillStyle = 'rgba(0,0,0,0.34)';
+    x.fillRect(0, 0, 32, H);
+    // 顶部受光边
+    x.fillStyle = 'rgba(255,255,255,0.26)';
+    x.fillRect(0, 0, 32, 3);
+    x.fillStyle = 'rgba(255,255,255,0.10)';
+    x.fillRect(0, 3, 32, 1);
+    // 墙脚暗边
+    x.fillStyle = 'rgba(0,0,0,0.45)';
+    x.fillRect(0, H - 5, 32, 5);
+    wallFaceCache.set(key, c);
+    return c;
+  };
+
+  P.mob = (name) => {
+    if (P.mobStyle === '3d' && P.assets.mobs[name]) return P.assets.mobs[name];
+    const faceKey = FACE_KEY[name];
+    if (!faceKey || P.assets.faces[faceKey] || name === 'player') return P.chibi(name);
+    return _mob(name);
+  };
 
   P.decor = (seed, kind) => {
     const t = P.assets.tiles;

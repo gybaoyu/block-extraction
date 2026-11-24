@@ -160,17 +160,20 @@
     Input.mouse.justRight = false;
   };
 
-  /* ---------------- 相机 ---------------- */
+  /* ---------------- 相机（2.5D 斜俯视：Y 轴压缩，做出看向前方的视角） ---------------- */
   const Cam = E.Cam = {
     x: 0, y: 0, shakeT: 0, shakeMag: 0, ox: 0, oy: 0,
+    // 纵向压缩比：1 = 纯俯视；0.8 ≈ 斜俯视（能看到墙的正面、角色有立体感）
+    KY: 0.88,
+    setPitch(k) { this.KY = E.clamp(k, 0.55, 1); },
     follow(tx, ty, dt, world) {
       this.x = E.lerp(this.x, tx, Math.min(1, dt * 9));
       this.y = E.lerp(this.y, ty, Math.min(1, dt * 9));
       if (world) {
-        const hw = E.W / 2, hh = E.H / 2;
+        const hw = E.W / 2, hh = E.H / (2 * this.KY);
         const mw = world.w * E.TILE, mh = world.h * E.TILE;
         this.x = mw > E.W ? E.clamp(this.x, hw, mw - hw) : mw / 2;
-        this.y = mh > E.H ? E.clamp(this.y, hh, mh - hh) : mh / 2;
+        this.y = mh > hh * 2 ? E.clamp(this.y, hh, mh - hh) : mh / 2;
       }
       if (this.shakeT > 0) {
         this.shakeT -= dt;
@@ -182,9 +185,22 @@
       this.shakeMag = Math.max(this.shakeMag * 0.6, mag);
       this.shakeT = Math.max(this.shakeT, dur);
     },
-    toWorld(sx, sy) { return { x: sx - E.W / 2 + this.x - this.ox, y: sy - E.H / 2 + this.y - this.oy }; },
-    toScreen(wx, wy) { return { x: wx - this.x + E.W / 2 + this.ox, y: wy - this.y + E.H / 2 + this.oy }; },
-    apply(ctx) { ctx.translate(E.W / 2 - this.x + this.ox, E.H / 2 - this.y + this.oy); },
+    toWorld(sx, sy) {
+      return {
+        x: sx - E.W / 2 + this.x - this.ox,
+        y: (sy - E.H / 2 + this.y - this.oy) / this.KY,
+      };
+    },
+    toScreen(wx, wy) {
+      return {
+        x: wx - this.x + E.W / 2 + this.ox,
+        y: (wy - this.y) * this.KY + E.H / 2 + this.oy,
+      };
+    },
+    apply(ctx) {
+      ctx.translate(E.W / 2 - this.x + this.ox, E.H / 2 - this.y + this.oy);
+      ctx.scale(1, this.KY);
+    },
   };
 
   /* ---------------- 粒子 / 飘字 ---------------- */

@@ -84,23 +84,22 @@
     const camX = E.Cam.x, camY = E.Cam.y;
     const x0 = Math.max(0, Math.floor((camX - E.W / 2) / TILE) - 1);
     const x1 = Math.min(g.world.w - 1, Math.ceil((camX + E.W / 2) / TILE) + 1);
-    const y0 = Math.max(0, Math.floor((camY - E.H / 2) / TILE) - 1);
-    const y1 = Math.min(g.world.h - 1, Math.ceil((camY + E.H / 2) / TILE) + 1);
+    const halfH = E.H / (2 * E.Cam.KY);
+    const y0 = Math.max(0, Math.floor((camY - halfH) / TILE) - 1);
+    const y1 = Math.min(g.world.h - 1, Math.ceil((camY + halfH) / TILE) + 1);
     const ptx = p.x / TILE, pty = p.y / TILE;
 
+    // ---- 1. 地面（只画地板，墙单独一层，便于做出高度）----
     for (let ty = y0; ty <= y1; ty++) {
       for (let tx = x0; tx <= x1; tx++) {
         const i = ty * g.world.w + tx;
         if (!g.world.seen[i]) continue;
         const t = g.world.tiles[i];
+        if (Wd.isSolidTile(t)) continue;
         const sx = tx * TILE, sy = ty * TILE;
         const d = Math.hypot(tx - ptx, ty - pty);
         ctx.globalAlpha = d < 11 ? 1 : Math.max(0.45, 1 - (d - 11) * 0.09);
-        // 矿点覆盖墙体
-        const ore = g.oreMap ? g.oreMap[i] : null;
-        if (ore) ctx.drawImage(P.tile(MCX.DATA.ores[ore.type].tex), sx, sy);
-        else if (t === Wd.T.WALL) ctx.drawImage(P.wallVar(g.world.wallTex, (tx * 7 + ty * 13) % 3), sx, sy);
-        else ctx.drawImage(P.tile(Wd.texName(g.world, t)), sx, sy);
+        ctx.drawImage(P.tile(Wd.texName(g.world, t)), sx, sy);
         // 装饰
         const dec = g.world.decor[i];
         if (dec) {
@@ -108,13 +107,46 @@
           const k = kinds[dec];
           if (k) ctx.drawImage(P.decor((tx * 7 + ty * 13) % 4, k), sx, sy, TILE, TILE);
         }
-        // 贴墙阴影
-        if (!Wd.isSolidTile(t)) {
-          if (ty > 0 && Wd.isSolidTile(g.world.tiles[i - g.world.w])) ctx.drawImage(P.shadowTop(), sx, sy);
-          if (tx > 0 && Wd.isSolidTile(g.world.tiles[i - 1])) {
-            ctx.fillStyle = 'rgba(0,0,0,0.32)';
-            ctx.fillRect(sx, sy, 4, TILE);
-          }
+        // 贴墙阴影（墙在玩家北侧 → 地面顶部压暗）
+        if (ty > 0 && Wd.isSolidTile(g.world.tiles[i - g.world.w])) ctx.drawImage(P.shadowTop(), sx, sy);
+        if (tx > 0 && Wd.isSolidTile(g.world.tiles[i - 1])) {
+          ctx.fillStyle = 'rgba(0,0,0,0.32)';
+          ctx.fillRect(sx, sy, 4, TILE);
+        }
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // ---- 2. 墙体：每格画成「顶面 + 正面」的方块，做出 2.5D 高度 ----
+    const FACE_H = 20;
+    const TOP_H = TILE - FACE_H;
+    const faceTex = P.wallFace(g.world.wallTex, FACE_H);
+    for (let ty = y0; ty <= y1; ty++) {
+      for (let tx = x0; tx <= x1; tx++) {
+        const i = ty * g.world.w + tx;
+        if (!g.world.seen[i]) continue;
+        const t = g.world.tiles[i];
+        if (!Wd.isSolidTile(t)) continue;
+        const sx = tx * TILE, sy = ty * TILE;
+        const d = Math.hypot(tx - ptx, ty - pty);
+        ctx.globalAlpha = d < 11 ? 1 : Math.max(0.45, 1 - (d - 11) * 0.09);
+        const ore = g.oreMap ? g.oreMap[i] : null;
+        const topTex = ore
+          ? P.tile(MCX.DATA.ores[ore.type].tex)
+          : (t === Wd.T.WALL ? P.wallVar(g.world.wallTex, (tx * 7 + ty * 13) % 3) : P.tile(Wd.texName(g.world, t)));
+        const southTile = ty + 1 < g.world.h ? g.world.tiles[i + g.world.w] : Wd.T.VOID;
+        if (!Wd.isSolidTile(southTile) && southTile !== Wd.T.VOID) {
+          // 朝南对着可走区域：上面一段是顶面，下面一段是正面
+          ctx.drawImage(topTex, 0, 0, 32, 32, sx, sy, 32, TOP_H);
+          ctx.fillStyle = 'rgba(255,255,255,0.07)';
+          ctx.fillRect(sx, sy, 32, TOP_H);
+          ctx.drawImage(faceTex, 0, 0, 32, FACE_H, sx, sy + TOP_H, 32, FACE_H);
+          ctx.fillStyle = 'rgba(255,255,255,0.22)';
+          ctx.fillRect(sx, sy + TOP_H, 32, 1);
+          ctx.fillStyle = 'rgba(0,0,0,0.30)';
+          ctx.fillRect(sx, sy + TOP_H + 1, 32, 1);
+        } else {
+          ctx.drawImage(topTex, sx, sy);
         }
         ctx.globalAlpha = 1;
       }
@@ -147,13 +179,13 @@
       }
     }
 
-    // 容器
+    // 容器（贴图本身就是俯视方块，加一点“立起来”的厚度）
     for (const c of g.world.containers) {
       if (!g.world.seen[c.ty * g.world.w + c.tx]) continue;
       const texName = c.type === 'chest' ? 'chest' : c.type === 'furnace' ? 'furnace' : 'crafting';
       ctx.save();
       ctx.globalAlpha = c.opened ? 0.5 : 1;
-      shadowEllipse(ctx, c.x, c.y + 13, 13, 5);
+      shadowEllipse(ctx, c.x, c.y + 15, 14, 5);
       ctx.drawImage(P.tile(texName), c.x - 16, c.y - 16);
       ctx.restore();
       if (!c.opened) {

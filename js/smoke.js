@@ -17,7 +17,7 @@
   function run() {
     try {
       const G = MCX.Game, E = MCX.E, Ent = MCX.Ent, Wd = MCX.World;
-      out('assets loaded=' + (MCX.PX.assetCount || 0) + '/' + ((MCX.ASSETS && Object.keys(MCX.ASSETS.items).length + Object.keys(MCX.ASSETS.tiles).length + Object.keys(MCX.ASSETS.mobs).length) || 0));
+      out('assets loaded=' + (MCX.PX.assetCount || 0) + '/' + ((MCX.ASSETS && ['items','tiles','faces','mobs'].reduce((n, k) => n + Object.keys(MCX.ASSETS[k] || {}).length, 0)) || 0));
       E.Save.reset();
       // 给点启动资金，避免测试受经济影响
       E.Save.data.emerald = 5000;
