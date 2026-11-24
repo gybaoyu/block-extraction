@@ -300,7 +300,8 @@
       const d = E.dist(e.x, e.y, p.x, p.y);
       const dx = p.x - e.x, dy = p.y - e.y;
       const nx = d > 0.001 ? dx / d : 0, ny = d > 0.001 ? dy / d : 0;
-      e.angle = Math.atan2(dy, dx);
+      const tAng = Math.atan2(dy, dx);
+      e.angle = E.angLerp(e.angle === undefined ? tAng : e.angle, tAng, Math.min(1, dt * 10));
       const def = e.def;
       const speed = def.speed;
       // 走路动画相位（按移动速度推进）
@@ -665,9 +666,16 @@
     p.buffs.speed = Math.max(0, p.buffs.speed - dt);
     p.buffs.str = Math.max(0, p.buffs.str - dt);
 
-    // 瞄准
+    // 瞄准：角度平滑跟随鼠标（丝滑转向，攻击判定仍按当前朝向）
     const mw = E.Cam.toWorld(inp.mouse.x, inp.mouse.y);
-    p.angle = Math.atan2(mw.y - p.y, mw.x - p.x);
+    const targetAng = Math.atan2(mw.y - p.y, mw.x - p.x);
+    p.angle = E.angLerp(p.angle, targetAng, Math.min(1, dt * 16));
+    // 屏幕空间的朝向分量：渲染时用来做「转身」
+    const sb = E.Cam.proj(p.x, p.y);
+    const sf = E.Cam.proj(p.x + Math.cos(p.angle) * 24, p.y + Math.sin(p.angle) * 24);
+    const angS = Math.atan2(sf.y - sb.y, sf.x - sb.x);
+    p.faceCos = E.lerp(p.faceCos === undefined ? Math.cos(angS) : p.faceCos, Math.cos(angS), Math.min(1, dt * 14));
+    p.faceSin = E.lerp(p.faceSin === undefined ? Math.sin(angS) : p.faceSin, Math.sin(angS), Math.min(1, dt * 14));
 
     // 冲刺
     if (p.dashT > 0) {

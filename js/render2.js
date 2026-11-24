@@ -212,11 +212,14 @@
     if (sBase.x < -140 || sBase.x > E.W + 140 || sBase.y < -200 || sBase.y > E.H + 140) return;
     shadowEllipse(ctx, sBase.x, sBase.y, e.r * 1.05, e.r * 0.5);
 
-    // 朝向：水平看左右，垂直看背/脸
-    const dx = p.x - e.x, dy = p.y - e.y;
-    const flip = dx < 0 ? -1 : 1;
-    const facingAway = dy < -6;
-    const dim = facingAway ? 0.12 : 0;
+    // 朝向：屏幕空间角度 → 转身（侧身宽、正/背窄，背对镜头压暗）
+    const sb2 = E.Cam.proj(e.x, e.y);
+    const sf2 = E.Cam.proj(e.x + Math.cos(e.angle || 0) * 24, e.y + Math.sin(e.angle || 0) * 24);
+    const angS = Math.atan2(sf2.y - sb2.y, sf2.x - sb2.x);
+    const fc = Math.cos(angS), fsn = Math.sin(angS);
+    const flip = fc < 0 ? -1 : 1;
+    const wScale = 0.82 + 0.18 * Math.abs(fc);
+    const dim = Math.max(0, -fsn) * 0.22;
 
     // 动画：步频相位 → 上下颠 + 左右倾 + 挤压
     const phase = (e.animWalk || 0) * 3.4;
@@ -230,7 +233,8 @@
     ctx.save();
     ctx.translate(sBase.x, sBase.y + bob);
     ctx.rotate(lean);
-    ctx.scale(flip * sx, sy);
+    ctx.scale(flip * sx * wScale, sy);
+    ctx.transform(1, 0, -0.10 * fc, 1, 0, 0);
     ctx.drawImage(img, -w / 2, -h, w, h);
     if (dim > 0) {
       ctx.globalCompositeOperation = 'source-atop';
@@ -289,11 +293,13 @@
     ctx.stroke();
     ctx.restore();
 
-    // 朝向：等距下屏幕方向 = 世界方向转 45°
+    // 朝向：等距屏幕空间角度 → 转身（侧身宽、正/背窄，背对镜头压暗）
     const ax = Math.cos(p.angle), ay = Math.sin(p.angle);
-    const flip = ax < 0 ? -1 : 1;
-    const facingAway = ay < -0.35;
-    const dim = facingAway ? 0.10 : 0;
+    const fc = p.faceCos === undefined ? 1 : p.faceCos;
+    const fs = p.faceSin === undefined ? 0 : p.faceSin;
+    const flip = fc < 0 ? -1 : 1;
+    const wScale = 0.80 + 0.20 * Math.abs(fc);
+    const dim = Math.max(0, -fs) * 0.22;
 
     // 走路动画：步频相位 → 上下颠 + 左右倾 + 落地挤压
     const phase = (p.walked || 0) / 26;
@@ -307,7 +313,8 @@
     ctx.save();
     ctx.translate(Math.round(sBase.x), Math.round(sBase.y + bob));
     ctx.rotate(lean);
-    ctx.scale(flip * sx, sy);
+    ctx.scale(flip * sx * wScale, sy);
+    ctx.transform(1, 0, -0.10 * fc, 1, 0, 0);
     ctx.drawImage(img, -w / 2, -h, w, h);
     if (dim > 0) {
       ctx.globalCompositeOperation = 'source-atop';
