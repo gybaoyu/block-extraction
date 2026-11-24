@@ -675,21 +675,26 @@
       Wd.moveEnt(g.world, p, Math.cos(p.dashDir) * cfg.dashSpeed * dt, Math.sin(p.dashDir) * cfg.dashSpeed * dt);
       if (Math.random() < 0.6) E.FX.burst(p.x, p.y, '#ffffff', 1, 40, 2, 0.25);
     } else {
-      const ax = E.Input.axis();
+      const axIn = E.Input.axis();
+      // 屏幕方向 → 世界方向（等距逆变换）：WASD 走的是屏幕上的上下左右
+      let ax = axIn.x / 2 + axIn.y;
+      let ay = axIn.y - axIn.x / 2;
+      const alen = Math.hypot(ax, ay);
+      if (alen > 0.001) { ax /= alen; ay /= alen; }
       let spd = p.speed * (p.buffs.speed > 0 ? 1.5 : 1);
       if (p.act) {
         spd = 0;
       }
-      if (ax.x || ax.y) {
+      if (alen > 0.001) {
         const before = { x: p.x, y: p.y };
-        Wd.moveEnt(g.world, p, ax.x * spd * dt, ax.y * spd * dt);
+        Wd.moveEnt(g.world, p, ax * spd * dt, ay * spd * dt);
         p.walked += E.dist(before.x, before.y, p.x, p.y);
       }
-      if (inp.keys.space && p.dashCd <= 0 && (ax.x || ax.y)) {
+      if (inp.keys.space && p.dashCd <= 0 && alen > 0.001) {
         p.dashT = cfg.dashTime;
         p.dashCd = cfg.dashCd;
         p.invuln = Math.max(p.invuln, cfg.dashTime + 0.12);
-        p.dashDir = Math.atan2(ax.y, ax.x);
+        p.dashDir = Math.atan2(ay, ax);
         MCX.SFX.play('dash');
       }
     }

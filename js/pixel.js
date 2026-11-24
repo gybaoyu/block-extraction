@@ -1076,10 +1076,11 @@
   // 渲染图按“显示高度”归一化，避免不同实体比例被拉伸
   const MOB_H = { player: 46, zombie: 42, skeleton: 44, creeper: 46, spider: 30, slime: 32, enderman: 52, blaze: 46, wither: 92 };
 
-  function toCanvas(img, w, h) {
+  function toCanvas(img, w, h, smooth) {
     const c = mkCanvas(w, h);
     const x = c.getContext('2d');
-    x.imageSmoothingEnabled = false;
+    x.imageSmoothingEnabled = !!smooth;
+    if (smooth) x.imageSmoothingQuality = 'high';
     x.drawImage(img, 0, 0, w, h);
     return c;
   }
@@ -1098,7 +1099,7 @@
               if (bucket === 'mobs') {
                 const th = MOB_H[key] || 44;
                 const tw = Math.max(10, Math.round((img.width * th) / img.height));
-                P.assets.mobs[key] = toCanvas(img, tw, th);
+                P.assets.mobs[key] = toCanvas(img, tw, th, true);
               } else {
                 P.assets[bucket][key] = toCanvas(img, 16, 16);
               }

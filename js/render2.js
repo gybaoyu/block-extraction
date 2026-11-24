@@ -218,17 +218,18 @@
     const facingAway = dy < -6;
     const dim = facingAway ? 0.12 : 0;
 
-    // 动画：走路上下颠 + 左右轻微倾斜 + 攻击/受伤挤压
-    const walk = e.animWalk || 0;
-    const bob = Math.sin(walk * 9) * 2.2;
-    const sway = Math.sin(walk * 4.5) * 0.03;
+    // 动画：步频相位 → 上下颠 + 左右倾 + 挤压
+    const phase = (e.animWalk || 0) * 3.4;
+    const stepping = Math.abs(Math.sin(phase));
+    const bob = -stepping * 3.0;
+    const lean = Math.sin(phase) * 0.05 * flip;
     const punch = e.hitT > 0 ? 0.12 : 0;
-    const sx = 1 + punch - Math.abs(Math.sin(walk * 9)) * 0.02;
-    const sy = 1 - punch + Math.abs(Math.sin(walk * 9)) * 0.03;
+    const sx = 1 + punch + (1 - stepping) * 0.02;
+    const sy = 1 - punch + stepping * 0.025;
 
     ctx.save();
     ctx.translate(sBase.x, sBase.y + bob);
-    ctx.rotate(sway * flip);
+    ctx.rotate(lean);
     ctx.scale(flip * sx, sy);
     ctx.drawImage(img, -w / 2, -h, w, h);
     if (dim > 0) {
@@ -294,16 +295,18 @@
     const facingAway = ay < -0.35;
     const dim = facingAway ? 0.10 : 0;
 
-    const moveT = p.walked || 0;
-    const bob = Math.sin(moveT * 0.12) * 2.2;
-    const sway = Math.sin(moveT * 0.06) * 0.03;
-    const punch = p.swingT > 0 ? p.swingT * 1.2 : 0;
-    const sx = 1 + punch * 0.15;
-    const sy = 1 - punch * 0.12;
+    // 走路动画：步频相位 → 上下颠 + 左右倾 + 落地挤压
+    const phase = (p.walked || 0) / 26;
+    const stepping = Math.abs(Math.sin(phase));
+    const bob = -stepping * 3.2;
+    const lean = Math.sin(phase) * 0.055 * flip;
+    const punch = p.swingT > 0 ? (1 - p.swingT / 0.18) : 0;
+    const sx = 1 + punch * 0.18 + (1 - stepping) * 0.03;
+    const sy = 1 - punch * 0.10 - (1 - stepping) * 0.02 + stepping * 0.02;
 
     ctx.save();
-    ctx.translate(sBase.x, sBase.y + bob);
-    ctx.rotate(sway * flip);
+    ctx.translate(Math.round(sBase.x), Math.round(sBase.y + bob));
+    ctx.rotate(lean);
     ctx.scale(flip * sx, sy);
     ctx.drawImage(img, -w / 2, -h, w, h);
     if (dim > 0) {
@@ -313,6 +316,22 @@
       ctx.globalCompositeOperation = 'source-over';
     }
     ctx.restore();
+
+    // 手上的武器：按瞄准方向伸出，挥砍时扫一个弧
+    const wId = p.weapon && p.weapon.id;
+    if (wId) {
+      const icon = P.item(wId);
+      const hand = E.Cam.projS(p.x + ax * 7, p.y + ay * 7);
+      const tipS = E.Cam.projS(p.x + ax * 30, p.y + ay * 30);
+      const aimAng = Math.atan2(tipS.y - hand.y, tipS.x - hand.x);
+      const sweep = p.swingT > 0 ? Math.sin((1 - p.swingT / 0.18) * Math.PI) * 1.5 - 0.6 : 0;
+      ctx.save();
+      ctx.translate(hand.x, hand.y - 16 + bob * 0.6);
+      ctx.rotate(aimAng + sweep);
+      ctx.scale(1.15, 1.15);
+      ctx.drawImage(icon, 2, -16, 16, 16);
+      ctx.restore();
+    }
 
     // 挥砍：等距平面上的椭圆扇形
     if (p.swingT > 0) {

@@ -6,7 +6,7 @@
   const MCX = window.MCX = window.MCX || {};
   const E = MCX.E = {};
 
-  E.W = 960; E.H = 540; E.TILE = 32;
+  E.W = 1280; E.H = 720; E.TILE = 32;
 
   /* ---------------- 数学 ---------------- */
   E.clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
