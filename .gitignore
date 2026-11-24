@@ -8,3 +8,5 @@ tools/resize_mobs.py
 *.log
 .DS_Store
 Thumbs.db
+tools/c.py
+tools/head.py
