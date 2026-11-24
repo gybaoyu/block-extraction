@@ -303,6 +303,10 @@
       e.angle = Math.atan2(dy, dx);
       const def = e.def;
       const speed = def.speed;
+      // 走路动画相位（按移动速度推进）
+      const moved = e.x !== e._px || e.y !== e._py;
+      e._px = e.x; e._py = e.y;
+      if (moved) e.animWalk = (e.animWalk || 0) + dt * (speed / 90);
       if (!e.aggro && d < 340) e.aggro = true;
       if (e.aggro && d > 820) e.aggro = false;
 

@@ -598,8 +598,9 @@
       const label = it.kind === 'container' ? (it.target.trap ? '打开箱子' : '打开' + (it.target.type === 'chest' ? '木箱' : it.target.type === 'furnace' ? '熔炉' : '工作台'))
         : '挖 ' + MCX.DATA.ores[it.target.type].name;
       const can = it.kind !== 'ore' || it.canMine;
+      const sp = E.Cam.projS(it.x, it.y);
       text(ctx, (can ? '[E] ' : '') + label + (can ? '' : '（需要更好的镐）'),
-        it.x, it.y - 34, 12, can ? '#ffe066' : '#ff8a5a', 'center');
+        sp.x, sp.y - 40, 12, can ? '#ffe066' : '#ff8a5a', 'center');
     }
 
     // 撤离提示
@@ -670,5 +671,6 @@
   };
 
   R.text = text;
+  R.drawHud = drawHud;
   R.heartPath = heartPath;
 })();

@@ -1194,5 +1194,85 @@
     return u;
   };
 
+  /* ============================================================
+   * 等距（45° 菱形）预渲染：地面菱形 + 立体方块
+   * 菱形宽 64、高 32（2:1），方块高度 H 像素
+   * ============================================================ */
+  const isoCache = new Map();
+
+  P.isoFloor = (texName) => {
+    const key = 'f:' + texName;
+    if (isoCache.has(key)) return isoCache.get(key);
+    const tex = P.tile(texName);
+    const c = mkCanvas(64, 32);
+    const x = c.getContext('2d');
+    x.imageSmoothingEnabled = false;
+    x.setTransform(1, 0.5, -1, 0.5, 32, 16);
+    x.drawImage(tex, -16, -16, 32, 32);
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    // 菱形描边，格子更清晰
+    x.strokeStyle = 'rgba(0,0,0,0.16)';
+    x.lineWidth = 1;
+    x.beginPath();
+    x.moveTo(32, 0.5); x.lineTo(63.5, 16); x.lineTo(32, 31.5); x.lineTo(0.5, 16); x.closePath();
+    x.stroke();
+    isoCache.set(key, c);
+    return c;
+  };
+
+  function fillQuad(x, pts, color) {
+    x.beginPath();
+    x.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) x.lineTo(pts[i][0], pts[i][1]);
+    x.closePath();
+    x.fillStyle = color;
+    x.fill();
+  }
+
+  P.isoBlock = (texName, H) => {
+    const key = 'b:' + texName + ':' + H;
+    if (isoCache.has(key)) return isoCache.get(key);
+    const tex = P.tile(texName);
+    const h = H || 24;
+    const c = mkCanvas(64, 32 + h);
+    const x = c.getContext('2d');
+    x.imageSmoothingEnabled = false;
+
+    // 顶面（菱形）
+    x.save();
+    x.setTransform(1, 0.5, -1, 0.5, 32, 16);
+    x.drawImage(tex, -16, -16, 32, 32);
+    x.restore();
+
+    // 左下侧面：origin(0,16)，u=(1,0.5)，v=(0,h/32)
+    x.save();
+    x.setTransform(1, 0.5, 0, h / 32, 0, 16);
+    x.drawImage(tex, 0, 0, 32, 32);
+    x.restore();
+    fillQuad(x, [[0, 16], [32, 32], [32, 32 + h], [0, 16 + h]], 'rgba(0,0,0,0.34)');
+
+    // 右下侧面：origin(32,32)，u=(1,-0.5)，v=(0,h/32)
+    x.save();
+    x.setTransform(1, -0.5, 0, h / 32, 32, 32);
+    x.drawImage(tex, 0, 0, 32, 32);
+    x.restore();
+    fillQuad(x, [[32, 32], [64, 16], [64, 16 + h], [32, 32 + h]], 'rgba(0,0,0,0.18)');
+
+    // 顶面轮廓
+    x.strokeStyle = 'rgba(0,0,0,0.20)';
+    x.lineWidth = 1;
+    x.beginPath();
+    x.moveTo(32, 0.5); x.lineTo(63.5, 16); x.lineTo(32, 31.5); x.lineTo(0.5, 16); x.closePath();
+    x.stroke();
+    // 底面收边
+    x.strokeStyle = 'rgba(0,0,0,0.35)';
+    x.beginPath();
+    x.moveTo(0, 16 + h); x.lineTo(32, 32 + h); x.lineTo(64, 16 + h);
+    x.stroke();
+
+    isoCache.set(key, c);
+    return c;
+  };
+
   MCX.PX.ready = true;
 })();

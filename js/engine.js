@@ -160,20 +160,29 @@
     Input.mouse.justRight = false;
   };
 
-  /* ---------------- 相机（2.5D 斜俯视：Y 轴压缩，做出看向前方的视角） ---------------- */
+  /* ---------------- 相机（45° 菱形等距投影） ---------------- */
   const Cam = E.Cam = {
     x: 0, y: 0, shakeT: 0, shakeMag: 0, ox: 0, oy: 0,
-    // 纵向压缩比：1 = 纯俯视；0.8 ≈ 斜俯视（能看到墙的正面、角色有立体感）
-    KY: 0.75,
-    setPitch(k) { this.KY = E.clamp(k, 0.55, 1); },
+    // 世界 → 屏幕（等距）：sx = dx - dy, sy = (dx + dy) / 2
+    proj(wx, wy) {
+      const dx = wx - this.x, dy = wy - this.y;
+      return { x: dx - dy + E.W / 2, y: (dx + dy) * 0.5 + E.H / 2 };
+    },
+    projS(wx, wy) {
+      const dx = wx - this.x, dy = wy - this.y;
+      return { x: dx - dy + E.W / 2 + this.ox, y: (dx + dy) * 0.5 + E.H / 2 + this.oy };
+    },
+    toWorld(sx, sy) {
+      const ux = sx - E.W / 2 - this.ox;
+      const uy = sy - E.H / 2 - this.oy;
+      return { x: ux / 2 + uy + this.x, y: uy - ux / 2 + this.y };
+    },
     follow(tx, ty, dt, world) {
       this.x = E.lerp(this.x, tx, Math.min(1, dt * 9));
       this.y = E.lerp(this.y, ty, Math.min(1, dt * 9));
       if (world) {
-        const hw = E.W / 2, hh = E.H / (2 * this.KY);
-        const mw = world.w * E.TILE, mh = world.h * E.TILE;
-        this.x = mw > E.W ? E.clamp(this.x, hw, mw - hw) : mw / 2;
-        this.y = mh > hh * 2 ? E.clamp(this.y, hh, mh - hh) : mh / 2;
+        this.x = E.clamp(this.x, 0, world.w * E.TILE);
+        this.y = E.clamp(this.y, 0, world.h * E.TILE);
       }
       if (this.shakeT > 0) {
         this.shakeT -= dt;
@@ -185,23 +194,7 @@
       this.shakeMag = Math.max(this.shakeMag * 0.6, mag);
       this.shakeT = Math.max(this.shakeT, dur);
     },
-    toWorld(sx, sy) {
-      return {
-        x: sx - E.W / 2 + this.x - this.ox,
-        y: (sy - E.H / 2 - this.oy) / this.KY + this.y,
-      };
-    },
-    toScreen(wx, wy) {
-      return {
-        x: wx - this.x + E.W / 2 + this.ox,
-        y: (wy - this.y) * this.KY + E.H / 2 + this.oy,
-      };
-    },
-    apply(ctx) {
-      // 注意：先 translate 再 scale，平移量要按压缩后的坐标算，否则镜头会偏
-      ctx.translate(E.W / 2 - this.x + this.ox, E.H / 2 - this.y * this.KY + this.oy);
-      ctx.scale(1, this.KY);
-    },
+    apply() { /* 等距投影不再用 ctx 变换，全部走 proj() */ },
   };
 
   /* ---------------- 粒子 / 飘字 ---------------- */
