@@ -50,18 +50,28 @@
 - **局外成长**：仓库、商店、生命/背包/移速升级、3 条可重复委托
 - **存档**：`localStorage` 自动保存，关掉浏览器不丢
 
-## 素材说明
+## 素材
 
-所有像素素材都是**代码里程序化绘制**的（`js/pixel.js`）：复刻 MC 原版的辨识度——钻石的切面、金锭的斜条、钻石剑的斜刃、苦力怕的脸、骷髅的骨白——但不打包任何 Mojang 原版贴图文件，避免版权问题，同时做到零加载。
+**贴图全部来自 [中文 Minecraft Wiki](https://zh.minecraft.wiki/)**（`zh.minecraft.wiki`），抓取脚本在 `tools/fetch_textures.ps1`，产物在 `assets/tex/`（77 张，约 170 KB）：
 
-想换成真实贴图：改 `js/pixel.js` 里 `P.item()` / `P.tile()` / `P.mob()` 三个入口，把 `16×16` PNG 贴进去即可，其它代码不用动。
+| 类别 | 来源 | 说明 |
+|---|---|---|
+| 物品图标 41 张 | `ItemSprite_*.png`（16×16） | 钻石、金锭、铁锭、绿宝石、红石、青金石、石英、远古残骸、木剑→下界合金剑、弓弩镐、胸甲、收纳袋、药水、TNT、末影珍珠…… |
+| 方块贴图 27 张 | `BlockSprite_*.png`（16×16） | 草方块顶面、石头、橡木木板、圆石、深板岩、下界岩、砂砾、苔藓块、石砖/深板岩砖墙、9 种矿石、下界传送门、熔炉、工作台、木桶、箱子顶面、红花/红蘑菇装饰 |
+| 生物渲染图 9 张 | `Steve / Zombie / Skeleton / Creeper / Spider / Slime / Enderman / Blaze / Wither` | 官方 3D 渲染，运行时缩放到 30~92px 高度，保留原始比例 |
+
+- 缺图 / 断网时会**自动回退**到 `js/pixel.js` 里的程序化像素图，不会白屏。
+- 想换别的皮肤包：把同名 PNG 丢进 `assets/tex/`（16×16 物品与方块、任意比例生物图）即可。
+- 版权：贴图版权归 **Mojang Studios**，本作是非商业同人作品；素材取自 Minecraft Wiki（[CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) 授权文本，贴图本身为游戏资源）。转载请注明出处。
 
 ## 目录
 
 ```
 index.html          入口
 css/style.css       界面样式（MC 风格 GUI）
-js/pixel.js         程序化像素素材（图标 / 方块 / 怪物）
+assets/tex/         官方贴图（来自 zh.minecraft.wiki，77 张）
+js/pixel.js         像素素材层（官方贴图优先，缺图回退程序化绘制）
+js/assets.js        素材清单（item/tile/mob → 文件路径）
 js/data.js          数值表（物品、敌人、掉落、地图、商店、任务）
 js/engine.js        工具 / 输入 / 相机 / 粒子 / 程序合成音效 / 存档
 js/world.js         随机地图生成（房间 + 走廊 + 分级）/ 碰撞 / 黑雾
@@ -70,7 +80,8 @@ js/render.js        渲染与小地图、HUD
 js/ui.js            基地 / 仓库 / 商店 / 结算 / 局内背包
 js/game.js          状态机与主循环
 js/smoke.js         端到端冒烟测试（?smoke=1 时运行）
-tools/              素材表与调试截图页
+tools/fetch_textures.ps1  从 Minecraft Wiki 重新抓贴图
+tools/sprites.html  素材表预览页
 GAME_DESIGN.md      设计文档与待确认清单
 ```
 

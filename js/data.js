@@ -188,7 +188,7 @@
 
   /* ---------- 升级 ---------- */
   const upgrades = {
-    hp:    { name: '生命上限', desc: '每级 +4 点生命上限', max: 5, base: 150, mult: 1.75, icon: ['heart'] },
+    hp:    { name: '生命上限', desc: '每级 +4 点生命上限', max: 5, base: 150, mult: 1.75, icon: ['golden_apple'] },
     slots: { name: '背包扩容', desc: '每级 +2 格背包', max: 3, base: 180, mult: 1.8, icon: ['bag_big'] },
     speed: { name: '轻功', desc: '每级移速 +6%', max: 4, base: 120, mult: 1.7, icon: ['potion_speed'] },
   };

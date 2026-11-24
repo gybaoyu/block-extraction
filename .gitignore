@@ -1,5 +1,10 @@
 # 临时产物
 tools/*.png
+tools/wiki/
+tools/crop.py
+tools/sample.py
+tools/sheet.py
+tools/resize_mobs.py
 *.log
 .DS_Store
 Thumbs.db

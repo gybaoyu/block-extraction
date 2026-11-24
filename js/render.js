@@ -150,18 +150,11 @@
     // 容器
     for (const c of g.world.containers) {
       if (!g.world.seen[c.ty * g.world.w + c.tx]) continue;
+      const texName = c.type === 'chest' ? 'chest' : c.type === 'furnace' ? 'furnace' : 'crafting';
       ctx.save();
-      ctx.globalAlpha = c.opened ? 0.55 : 1;
-      shadowEllipse(ctx, c.x, c.y + 12, 13, 5);
-      if (c.opened) {
-        ctx.drawImage(P.tile('barrel'), c.x - 16, c.y - 16);
-      } else if (c.type === 'chest') {
-        ctx.drawImage(P.itemSpec('chest'), c.x - 16, c.y - 22, 32, 32);
-      } else if (c.type === 'furnace') {
-        ctx.drawImage(P.tile('furnace'), c.x - 16, c.y - 16);
-      } else {
-        ctx.drawImage(P.tile('crafting'), c.x - 16, c.y - 16);
-      }
+      ctx.globalAlpha = c.opened ? 0.5 : 1;
+      shadowEllipse(ctx, c.x, c.y + 13, 13, 5);
+      ctx.drawImage(P.tile(texName), c.x - 16, c.y - 16);
       ctx.restore();
       if (!c.opened) {
         const bob = Math.sin(g.time * 3 + c.x) * 1.5;
@@ -211,44 +204,40 @@
     const list = g.enemies.slice().sort((a, b) => a.y - b.y);
     for (const e of list) {
       const img = P.mob(e.def.sprite);
-      const base = e.def.boss ? 58 : e.small ? 21 : 34;
-      const w = base, h = base;
-      shadowEllipse(ctx, e.x, e.y + e.r * 0.7, e.r * 0.9, e.r * 0.38);
+      const sc = e.small ? 0.62 : 1;
+      const w = img.width * sc, h = img.height * sc;
+      const footY = e.y + e.r * 0.65;
+      const topY = footY - h;
+      shadowEllipse(ctx, e.x, footY, Math.max(8, e.r * 0.85), e.r * 0.32);
       const flip = (p.x < e.x) ? -1 : 1;
       ctx.save();
-      ctx.translate(e.x, e.y - h * 0.32);
+      ctx.translate(e.x, footY);
       if (flip < 0) ctx.scale(-1, 1);
-      ctx.drawImage(img, -w / 2, -h / 2, w, h);
+      ctx.drawImage(img, -w / 2, -h, w, h);
       // 受击白闪
       if (e.hitT > 0) {
         ctx.globalAlpha = e.hitT * 3.2;
         ctx.globalCompositeOperation = 'lighter';
-        ctx.drawImage(img, -w / 2, -h / 2, w, h);
+        ctx.drawImage(img, -w / 2, -h, w, h);
         ctx.globalCompositeOperation = 'source-over';
         ctx.globalAlpha = 1;
       }
       ctx.restore();
       // 血条
       if (e.hp < e.maxHp && !e.def.boss) {
-        const bw = 26, bh = 3;
+        const bw = 28, bh = 3;
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(e.x - bw / 2, e.y - h * 0.9 - 8, bw, bh);
+        ctx.fillRect(e.x - bw / 2, topY - 6, bw, bh);
         ctx.fillStyle = e.hp / e.maxHp > 0.5 ? '#5cf06a' : e.hp / e.maxHp > 0.25 ? '#ffd24a' : '#ff5a4a';
-        ctx.fillRect(e.x - bw / 2, e.y - h * 0.9 - 8, bw * (e.hp / e.maxHp), bh);
+        ctx.fillRect(e.x - bw / 2, topY - 6, bw * (e.hp / e.maxHp), bh);
       }
       // 苦力怕点燃
       if (e.fuse > 0) {
         ctx.globalAlpha = 0.4 + 0.4 * Math.sin(g.time * 22);
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(e.x, e.y - 4, e.r + 8, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(e.x, footY - h * 0.5, Math.max(w, h) * 0.55, 0, Math.PI * 2); ctx.stroke();
         ctx.globalAlpha = 1;
-      }
-      // 末影人眼睛
-      if (e.type === 'enderman') {
-        ctx.fillStyle = 'rgba(220,150,255,0.9)';
-        ctx.fillRect(e.x - 7, e.y - h * 0.55, 3, 2);
-        ctx.fillRect(e.x + 4, e.y - h * 0.55, 3, 2);
       }
     }
   }
@@ -256,13 +245,27 @@
   function drawPlayer(ctx, g) {
     const p = g.player;
     const img = P.mob('player');
-    const S = 36;
-    shadowEllipse(ctx, p.x, p.y + 9, 11, 5);
+    const w = img.width, h = img.height;
+    const footY = p.y + 12;
+    shadowEllipse(ctx, p.x, footY, 12, 5);
+    // 脚下光环：一眼认出自己
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,226,120,0.8)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(p.x, footY - 1, 15, 7, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,226,120,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(p.x, footY - 1, 19, 9, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
     // 冲刺拖影
     if (p.dashT > 0) {
-      ctx.globalAlpha = 0.3;
+      ctx.globalAlpha = 0.28;
       for (let i = 1; i <= 3; i++) {
-        ctx.drawImage(img, p.x - S / 2 - Math.cos(p.dashDir) * i * 12, p.y - S / 2 - 2 - Math.sin(p.dashDir) * i * 12, S, S);
+        ctx.drawImage(img, p.x - w / 2 - Math.cos(p.dashDir) * i * 12, footY - h - Math.sin(p.dashDir) * i * 12, w, h);
       }
       ctx.globalAlpha = 1;
     }
@@ -277,9 +280,9 @@
     ctx.stroke();
     ctx.globalAlpha = 1;
     ctx.save();
-    ctx.translate(p.x, p.y - 6);
+    ctx.translate(p.x, footY);
     if (ax < 0) ctx.scale(-1, 1);
-    ctx.drawImage(img, -S / 2, -S / 2 - 1, S, S);
+    ctx.drawImage(img, -w / 2, -h, w, h);
     ctx.restore();
 
     // 挥砍特效

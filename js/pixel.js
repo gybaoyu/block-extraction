@@ -846,5 +846,104 @@
     return p.out();
   };
 
+  /* ============================================================
+   * 官方素材覆盖层（Minecraft Wiki · zh.minecraft.wiki）
+   * 成功加载 assets/tex/*.png 就覆盖程序化像素图；任意一张失败自动回退
+   * ============================================================ */
+  P.assets = { items: {}, tiles: {}, mobs: {} };
+  P.assetCount = 0;
+  const assetURLs = new Map();
+  const _itemSpec = P.itemSpec, _item = P.item, _itemURL = P.itemURL;
+  const _tile = P.tile, _wallVar = P.wallVar, _mob = P.mob, _decor = P.decor;
+
+  // 渲染图按“显示高度”归一化，避免不同实体比例被拉伸
+  const MOB_H = { player: 46, zombie: 42, skeleton: 44, creeper: 46, spider: 30, slime: 32, enderman: 52, blaze: 46, wither: 92 };
+
+  function toCanvas(img, w, h) {
+    const c = mkCanvas(w, h);
+    const x = c.getContext('2d');
+    x.imageSmoothingEnabled = false;
+    x.drawImage(img, 0, 0, w, h);
+    return c;
+  }
+
+  P.loadAssets = function (man, done) {
+    const tasks = [];
+    const finish = () => { P.assetReady = true; if (done) done(); };
+    if (!man) { setTimeout(finish, 0); return; }
+    const load = (map, bucket) => {
+      if (!map) return;
+      Object.keys(map).forEach((key) => {
+        tasks.push(new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            try {
+              if (bucket === 'mobs') {
+                const th = MOB_H[key] || 44;
+                const tw = Math.max(10, Math.round((img.width * th) / img.height));
+                P.assets.mobs[key] = toCanvas(img, tw, th);
+              } else {
+                P.assets[bucket][key] = toCanvas(img, 16, 16);
+              }
+              P.assetCount++;
+            } catch (e) { /* 忽略单张失败 */ }
+            resolve();
+          };
+          img.onerror = () => resolve();
+          img.src = map[key];
+        }));
+      });
+    };
+    load(man.items, 'items');
+    load(man.tiles, 'tiles');
+    load(man.mobs, 'mobs');
+    Promise.all(tasks).then(finish, finish);
+  };
+
+  P.itemSpec = (spec) => {
+    const k = Array.isArray(spec) ? spec[0] : String(spec);
+    if (P.assets.items[k]) return P.assets.items[k];
+    return _itemSpec(spec);
+  };
+
+  P.item = (id) => (P.assets.items[id] ? P.assets.items[id] : _item(id));
+
+  P.tile = (name) => {
+    if (P.assets.tiles[name]) {
+      const k = name + '!32';
+      if (!tileCache.has(k)) tileCache.set(k, toCanvas(P.assets.tiles[name], 32, 32));
+      return tileCache.get(k);
+    }
+    return _tile(name);
+  };
+
+  P.wallVar = (wallName, v) => (P.assets.tiles[wallName] ? P.tile(wallName) : _wallVar(wallName, v));
+
+  P.mob = (name) => (P.assets.mobs[name] ? P.assets.mobs[name] : _mob(name));
+
+  P.decor = (seed, kind) => {
+    const t = P.assets.tiles;
+    if (kind === 'flower' && t.decor_flower) return t.decor_flower;
+    if (kind === 'mushroom' && t.decor_mushroom) return t.decor_mushroom;
+    return _decor(seed, kind);
+  };
+
+  P.itemURL = (id, scale) => {
+    const a = P.assets.items[id];
+    if (!a) return _itemURL(id, scale);
+    const k = 'a:' + id + '@' + (scale || 1);
+    if (assetURLs.has(k)) return assetURLs.get(k);
+    let src = a;
+    if (scale && scale !== 1) {
+      src = mkCanvas(16 * scale, 16 * scale);
+      const x = src.getContext('2d');
+      x.imageSmoothingEnabled = false;
+      x.drawImage(a, 0, 0, 16, 16, 0, 0, 16 * scale, 16 * scale);
+    }
+    const u = src.toDataURL();
+    assetURLs.set(k, u);
+    return u;
+  };
+
   MCX.PX.ready = true;
 })();

@@ -17,6 +17,7 @@
   function run() {
     try {
       const G = MCX.Game, E = MCX.E, Ent = MCX.Ent, Wd = MCX.World;
+      out('assets loaded=' + (MCX.PX.assetCount || 0) + '/' + ((MCX.ASSETS && Object.keys(MCX.ASSETS.items).length + Object.keys(MCX.ASSETS.tiles).length + Object.keys(MCX.ASSETS.mobs).length) || 0));
       E.Save.reset();
       // 给点启动资金，避免测试受经济影响
       E.Save.data.emerald = 5000;
@@ -132,5 +133,11 @@
     }
   }
 
-  window.addEventListener('DOMContentLoaded', () => setTimeout(run, 60));
+  window.addEventListener('DOMContentLoaded', () => {
+    const waitReady = () => {
+      if (!window.__MCX_READY) { setTimeout(waitReady, 40); return; }
+      setTimeout(run, 40);
+    };
+    waitReady();
+  });
 })();

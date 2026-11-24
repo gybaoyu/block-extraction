@@ -35,10 +35,16 @@
     this.ctx = this.canvas.getContext('2d');
     this.ctx.imageSmoothingEnabled = false;
     E.Input.init(this.canvas);
+    const boot = () => this.boot();
+    if (MCX.PX.loadAssets && MCX.ASSETS) MCX.PX.loadAssets(MCX.ASSETS, boot);
+    else boot();
+  };
+
+  Game.boot = function () {
     MCX.UI.init(this);
     this.state = 'base';
     if (location.search.indexOf('smoke') >= 0) {
-      // 冒烟测试：不启动 RAF，由 tools/smoke 驱动 tick
+      // 冒烟测试：不启动 RAF，由 js/smoke.js 驱动 tick
       window.__MCX_READY = true;
       return;
     }
@@ -57,9 +63,9 @@
         e.aggro = true;
         this.enemies.push(e);
       });
-      for (let i = 0; i < 40; i++) {
-        Ent.spawnDrop(this, p.x + Math.cos(i) * (60 + i * 3), p.y + Math.sin(i) * (60 + i * 3),
-          ['diamond', 'gold_ingot', 'emerald', 'coal', 'iron_ingot'][i % 5], 1);
+      for (let i = 0; i < 16; i++) {
+        Ent.spawnDrop(this, p.x + Math.cos(i * 1.9) * (70 + (i % 5) * 26), p.y + Math.sin(i * 1.9) * (70 + (i % 4) * 30),
+          ['diamond', 'gold_ingot', 'emerald', 'coal', 'iron_ingot', 'lapis', 'quartz'][i % 7], 1);
       }
       for (let i = 0; i < frames; i++) {
         E.Input.mouse.x = 640;
