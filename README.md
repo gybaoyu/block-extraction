@@ -4,6 +4,16 @@
 
 纯前端：**零依赖、零构建、零联网**，双击 `index.html` 就能玩，也可以直接挂 GitHub Pages。
 
+**🎮 在线玩：<https://turinno-inc.github.io/block-extraction/>**
+
+| 地址 | 状态 | 说明 |
+|---|---|---|
+| `turinno-inc.github.io/block-extraction/` | **200 直连** | 正式地址（`github.io` 属于 tcamp 合法域名） |
+| `gybaoyu.github.io/block-extraction/` | 301 → | 会跳到 `abalone.ink/block-extraction/`（个人账号配了自定义域名） |
+| `abalone.ink/block-extraction/` | 200 | 自定义域名入口 |
+
+> 仓库同时维护两份：`Turinno-Inc/block-extraction`（正式）、`gybaoyu/block-extraction`（备份），内容一致。
+
 ![战斗截图](docs/screenshot-raid.png)
 
 ---
