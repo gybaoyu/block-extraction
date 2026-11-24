@@ -53,7 +53,7 @@
     // ---- 1. 选单元格 ----
     const cells = [];
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) cells.push({ i, j });
-    const spawnCell = { i: 0, j: 1 };
+    const spawnCell = { i: GW >> 1, j: GH >> 1 };
     const others = cells.filter((c) => !(c.i === spawnCell.i && c.j === spawnCell.j));
     E.shuffle(others);
     const want = E.clamp(map.rooms, 6, cells.length);

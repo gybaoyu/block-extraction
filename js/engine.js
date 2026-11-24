@@ -164,7 +164,7 @@
   const Cam = E.Cam = {
     x: 0, y: 0, shakeT: 0, shakeMag: 0, ox: 0, oy: 0,
     // 纵向压缩比：1 = 纯俯视；0.8 ≈ 斜俯视（能看到墙的正面、角色有立体感）
-    KY: 0.88,
+    KY: 0.75,
     setPitch(k) { this.KY = E.clamp(k, 0.55, 1); },
     follow(tx, ty, dt, world) {
       this.x = E.lerp(this.x, tx, Math.min(1, dt * 9));
@@ -188,7 +188,7 @@
     toWorld(sx, sy) {
       return {
         x: sx - E.W / 2 + this.x - this.ox,
-        y: (sy - E.H / 2 + this.y - this.oy) / this.KY,
+        y: (sy - E.H / 2 - this.oy) / this.KY + this.y,
       };
     },
     toScreen(wx, wy) {
@@ -198,7 +198,8 @@
       };
     },
     apply(ctx) {
-      ctx.translate(E.W / 2 - this.x + this.ox, E.H / 2 - this.y + this.oy);
+      // 注意：先 translate 再 scale，平移量要按压缩后的坐标算，否则镜头会偏
+      ctx.translate(E.W / 2 - this.x + this.ox, E.H / 2 - this.y * this.KY + this.oy);
       ctx.scale(1, this.KY);
     },
   };

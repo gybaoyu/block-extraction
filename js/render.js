@@ -117,36 +117,34 @@
       }
     }
 
-    // ---- 2. 墙体：每格画成「顶面 + 正面」的方块，做出 2.5D 高度 ----
-    const FACE_H = 20;
-    const TOP_H = TILE - FACE_H;
-    const faceTex = P.wallFace(g.world.wallTex, FACE_H);
+    // ---- 2. 墙体：整块「顶面 + 正面」，像真的立在地面上 ----
+    const KY = E.Cam.KY;
+    const WALL_H = 40;                 // 墙面高度（屏幕像素）
+    const faceTex = P.wallFace(g.world.wallTex, WALL_H);
     for (let ty = y0; ty <= y1; ty++) {
       for (let tx = x0; tx <= x1; tx++) {
         const i = ty * g.world.w + tx;
         if (!g.world.seen[i]) continue;
         const t = g.world.tiles[i];
         if (!Wd.isSolidTile(t)) continue;
-        const sx = tx * TILE, sy = ty * TILE;
+        const sx = tx * TILE;
+        const baseY = (ty + 1) * TILE;              // 方块底边（世界坐标）
         const d = Math.hypot(tx - ptx, ty - pty);
         ctx.globalAlpha = d < 11 ? 1 : Math.max(0.45, 1 - (d - 11) * 0.09);
         const ore = g.oreMap ? g.oreMap[i] : null;
         const topTex = ore
           ? P.tile(MCX.DATA.ores[ore.type].tex)
           : (t === Wd.T.WALL ? P.wallVar(g.world.wallTex, (tx * 7 + ty * 13) % 3) : P.tile(Wd.texName(g.world, t)));
+        // 顶面：整体上抬 WALL_H，看上去是“站在地上的方块”的上表面
+        ctx.drawImage(topTex, sx, baseY - TILE - WALL_H / KY, TILE, TILE);
+        // 正面：只有南边是可走地面才画（朝镜头的一面）
         const southTile = ty + 1 < g.world.h ? g.world.tiles[i + g.world.w] : Wd.T.VOID;
         if (!Wd.isSolidTile(southTile) && southTile !== Wd.T.VOID) {
-          // 朝南对着可走区域：上面一段是顶面，下面一段是正面
-          ctx.drawImage(topTex, 0, 0, 32, 32, sx, sy, 32, TOP_H);
-          ctx.fillStyle = 'rgba(255,255,255,0.07)';
-          ctx.fillRect(sx, sy, 32, TOP_H);
-          ctx.drawImage(faceTex, 0, 0, 32, FACE_H, sx, sy + TOP_H, 32, FACE_H);
-          ctx.fillStyle = 'rgba(255,255,255,0.22)';
-          ctx.fillRect(sx, sy + TOP_H, 32, 1);
-          ctx.fillStyle = 'rgba(0,0,0,0.30)';
-          ctx.fillRect(sx, sy + TOP_H + 1, 32, 1);
-        } else {
-          ctx.drawImage(topTex, sx, sy);
+          ctx.save();
+          ctx.translate(sx, baseY);
+          ctx.scale(1, 1 / KY);                     // 抵消镜头压扁：墙面竖直
+          ctx.drawImage(faceTex, 0, -WALL_H, TILE, WALL_H);
+          ctx.restore();
         }
         ctx.globalAlpha = 1;
       }
@@ -233,17 +231,19 @@
 
   function drawEnemies(ctx, g) {
     const p = g.player;
+    const KY = E.Cam.KY;
     const list = g.enemies.slice().sort((a, b) => a.y - b.y);
     for (const e of list) {
       const img = P.mob(e.def.sprite);
       const sc = e.small ? 0.62 : 1;
       const w = img.width * sc, h = img.height * sc;
       const footY = e.y + e.r * 0.65;
-      const topY = footY - h;
+      const topWorld = footY - h / KY;
       shadowEllipse(ctx, e.x, footY, Math.max(8, e.r * 0.85), e.r * 0.32);
       const flip = (p.x < e.x) ? -1 : 1;
       ctx.save();
       ctx.translate(e.x, footY);
+      ctx.scale(1, 1 / KY);          // 抵消镜头压扁，让角色立起来
       if (flip < 0) ctx.scale(-1, 1);
       ctx.drawImage(img, -w / 2, -h, w, h);
       // 受击白闪
@@ -259,16 +259,18 @@
       if (e.hp < e.maxHp && !e.def.boss) {
         const bw = 28, bh = 3;
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(e.x - bw / 2, topY - 6, bw, bh);
+        ctx.fillRect(e.x - bw / 2, topWorld - 4, bw, bh);
         ctx.fillStyle = e.hp / e.maxHp > 0.5 ? '#5cf06a' : e.hp / e.maxHp > 0.25 ? '#ffd24a' : '#ff5a4a';
-        ctx.fillRect(e.x - bw / 2, topY - 6, bw * (e.hp / e.maxHp), bh);
+        ctx.fillRect(e.x - bw / 2, topWorld - 4, bw * (e.hp / e.maxHp), bh);
       }
       // 苦力怕点燃
       if (e.fuse > 0) {
         ctx.globalAlpha = 0.4 + 0.4 * Math.sin(g.time * 22);
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(e.x, footY - h * 0.5, Math.max(w, h) * 0.55, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(e.x, footY - 2, Math.max(w, h) * 0.5, Math.max(w, h) * 0.25, 0, 0, Math.PI * 2);
+        ctx.stroke();
         ctx.globalAlpha = 1;
       }
     }
@@ -297,7 +299,13 @@
     if (p.dashT > 0) {
       ctx.globalAlpha = 0.28;
       for (let i = 1; i <= 3; i++) {
-        ctx.drawImage(img, p.x - w / 2 - Math.cos(p.dashDir) * i * 12, footY - h - Math.sin(p.dashDir) * i * 12, w, h);
+        const tx = p.x - Math.cos(p.dashDir) * i * 12;
+        const ty = footY - Math.sin(p.dashDir) * i * 12;
+        ctx.save();
+        ctx.translate(tx, ty);
+        ctx.scale(1, 1 / E.Cam.KY);
+        ctx.drawImage(img, -w / 2, -h, w, h);
+        ctx.restore();
       }
       ctx.globalAlpha = 1;
     }
@@ -313,6 +321,7 @@
     ctx.globalAlpha = 1;
     ctx.save();
     ctx.translate(p.x, footY);
+    ctx.scale(1, 1 / E.Cam.KY);      // 抵消镜头压扁
     if (ax < 0) ctx.scale(-1, 1);
     ctx.drawImage(img, -w / 2, -h, w, h);
     ctx.restore();
