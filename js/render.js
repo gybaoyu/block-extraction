@@ -478,15 +478,15 @@
     const barSlot = 40, barGap = 3, barN = 4;
     const barW = barN * barSlot + (barN - 1) * barGap;
     const barX = W / 2 - barW / 2;
-    const barY = H - barSlot - 20;
-    const heartSpacing = 20;
+    const barY = H - barSlot - 16;
+    const heartSpacing = 18;
     const hx0 = W / 2 - (heartsPerRow * heartSpacing) / 2;
-    const hy0 = barY - 42;
+    const hy0 = barY - 24;
     for (let i = 0; i < heartCount; i++) {
       const row = Math.floor(i / heartsPerRow);
       const col = i % heartsPerRow;
       const hx = hx0 + col * heartSpacing;
-      const hy = hy0 + row * 20;
+      const hy = hy0 + row * 18;
       const hpIn = E.clamp(p.hp - i * perHeart, 0, perHeart);
       heartPath(ctx, hx, hy, s, 'rgba(0,0,0,0.55)');
       if (hpIn > 0) {
@@ -501,10 +501,13 @@
       }
     }
     // 护甲图标 + buff，放在血条左侧
-    if (p.armor) ctx.drawImage(P.item(p.armor.id), hx0 - 42, hy0 - 4, 24, 24);
-    let byy = hy0 - 22;
-    if (p.buffs.speed > 0) { text(ctx, '迅捷 ' + p.buffs.speed.toFixed(0) + 's', hx0 - 42, byy, 12, '#4ad8e8'); byy -= 16; }
-    if (p.buffs.str > 0) { text(ctx, '力量 ' + p.buffs.str.toFixed(0) + 's', hx0 - 42, byy, 12, '#d86ae8'); byy -= 16; }
+    let sy = 12;
+    if (p.armor) {
+      ctx.drawImage(P.item(p.armor.id), hx0 - 30, hy0 - 2, 20, 20);
+      sy = hy0 - 12;
+    }
+    if (p.buffs.speed > 0) { text(ctx, '迅捷 ' + p.buffs.speed.toFixed(0) + 's', hx0 - 30, sy, 11, '#4ad8e8'); sy -= 14; }
+    if (p.buffs.str > 0) { text(ctx, '力量 ' + p.buffs.str.toFixed(0) + 's', hx0 - 30, sy, 11, '#d86ae8'); sy -= 14; }
 
     // 计时
     const tleft = Math.max(0, g.world.timeLeft - g.time);
@@ -558,42 +561,39 @@
     // Boss 血条（只在交战时显示）
     const boss = g.enemies.find((e) => e.def.boss && !e.dead && e.aggro);
     if (boss) {
-      const bw = 460;
+      const bw = 420;
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.fillRect(W / 2 - bw / 2, H - 200, bw, 18);
+      ctx.fillRect(W / 2 - bw / 2, H - 34, bw, 16);
       ctx.fillStyle = '#a24ae8';
-      ctx.fillRect(W / 2 - bw / 2 + 2, H - 198, (bw - 4) * E.clamp(boss.hp / boss.maxHp, 0, 1), 14);
-      text(ctx, '凋灵 ' + Math.max(0, Math.ceil(boss.hp)) + '/' + boss.maxHp, W / 2, H - 187, 13, '#ffffff', 'center');
+      ctx.fillRect(W / 2 - bw / 2 + 2, H - 32, (bw - 4) * E.clamp(boss.hp / boss.maxHp, 0, 1), 12);
+      text(ctx, '凋灵 ' + Math.max(0, Math.ceil(boss.hp)) + '/' + boss.maxHp, W / 2, H - 22, 12, '#ffffff', 'center');
     }
 
     // 快捷栏（仿 MC，居中底部）：武器 + 3 个快捷道具
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(barX - 6, barY - 6, barW + 12, barSlot + 12);
+    ctx.fillRect(barX - 5, barY - 5, barW + 10, barSlot + 10);
     ctx.strokeStyle = 'rgba(255,255,255,0.18)';
     ctx.lineWidth = 1;
-    ctx.strokeRect(barX - 6.5, barY - 6.5, barW + 13, barSlot + 13);
-
+    ctx.strokeRect(barX - 5.5, barY - 5.5, barW + 11, barSlot + 11);
     const slotItems = [p.weapon, p.quick[0], p.quick[1], p.quick[2]];
     for (let i = 0; i < barN; i++) {
       const x = barX + i * (barSlot + barGap), y = barY;
-      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fillStyle = 'rgba(255,255,255,0.07)';
       ctx.fillRect(x, y, barSlot, barSlot);
       ctx.strokeStyle = i === 0 ? 'rgba(255,226,120,0.6)' : 'rgba(255,255,255,0.22)';
       ctx.strokeRect(x + 0.5, y + 0.5, barSlot - 1, barSlot - 1);
       const it = slotItems[i];
-      if (it) ctx.drawImage(P.item(it.id), x + 11, y + 11, barSlot - 22, barSlot - 22);
-      if (i > 0) text(ctx, String(i), x + 4, y + 15, 12, '#cfcfcf');
+      if (it) ctx.drawImage(P.item(it.id), x + 8, y + 8, barSlot - 16, barSlot - 16);
+      if (i > 0) text(ctx, String(i), x + 3, y + 12, 10, '#cfcfcf');
     }
-    if (p.weapon) {
-      text(ctx, p.weapon.name + ' · 伤害 ' + Math.round(MCX.Ent.weaponDmg(p)), W / 2, barY - 12, 13, '#ffffff', 'center');
-    }
+    if (p.weapon) text(ctx, p.weapon.name, 8, 18, 11, '#cfcfcf');
 
-    // 背包 / 价值（右下角，小字）
+    // 背包 / 价值（右下角）
     const used = MCX.Ent.invUsed(p);
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(W - 190, H - 52, 178, 38);
-    text(ctx, '背包 ' + used + '/' + p.slots, W - 178, H - 30, 13, used >= p.slots ? '#ff5a4a' : '#ffffff');
-    text(ctx, '价值 ' + MCX.Ent.invValue(p), W - 178, H - 14, 12, '#9ad8ff');
+    ctx.fillRect(W - 118, H - 40, 110, 30);
+    text(ctx, '背包 ' + used + '/' + p.slots, W - 110, H - 22, 11, used >= p.slots ? '#ff5a4a' : '#ffffff');
+    text(ctx, '价值 ' + MCX.Ent.invValue(p), W - 110, H - 10, 10, '#9ad8ff');
 
     // 交互提示
     const it = MCX.Ent.findInteractable(g);

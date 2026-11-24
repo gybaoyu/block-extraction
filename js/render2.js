@@ -314,7 +314,8 @@
     const sx = 1 + punch * 0.18 + (1 - stepping) * 0.03;
     const sy = 1 - punch * 0.10 - (1 - stepping) * 0.02 + stepping * 0.02;
 
-    {
+    const usedPuppet = false;
+    if (!usedPuppet) {
       ctx.save();
       ctx.translate(Math.round(sBase.x), Math.round(sBase.y + bob));
       ctx.rotate(lean);

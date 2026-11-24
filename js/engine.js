@@ -6,7 +6,7 @@
   const MCX = window.MCX = window.MCX || {};
   const E = MCX.E = {};
 
-  E.W = 960; E.H = 540; E.TILE = 32; E.SCALE = 2;   // 布局用 960x540，画到 1920x1080 画布上（2 倍整数放大，不糊）
+  E.W = 960; E.H = 540; E.TILE = 32; E.SCALE = 2;   // 布局 960x540，画到 1920x1080 画布（2 倍整数放大）
 
   /* ---------------- 数学 ---------------- */
   E.clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
