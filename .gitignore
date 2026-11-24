@@ -12,3 +12,4 @@ tools/c.py
 tools/head.py
 tools/cc.py
 tools/zz.py
+tools/pp.py
