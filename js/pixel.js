@@ -1230,10 +1230,12 @@
     x.fill();
   }
 
-  P.isoBlock = (texName, H) => {
-    const key = 'b:' + texName + ':' + H;
+  P.isoBlock = (texName, H, sideTex, sideTex2) => {
+    const key = 'b:' + texName + ':' + H + ':' + (sideTex || '') + ':' + (sideTex2 || '');
     if (isoCache.has(key)) return isoCache.get(key);
     const tex = P.tile(texName);
+    const sideA = sideTex ? P.tile(sideTex) : tex;
+    const sideB = sideTex2 ? P.tile(sideTex2) : sideA;
     const h = H || 24;
     const c = mkCanvas(64, 32 + h);
     const x = c.getContext('2d');
@@ -1248,16 +1250,16 @@
     // 左下侧面：origin(0,16)，u=(1,0.5)，v=(0,h/32)
     x.save();
     x.setTransform(1, 0.5, 0, h / 32, 0, 16);
-    x.drawImage(tex, 0, 0, 32, 32);
+    x.drawImage(sideA, 0, 0, 32, 32);
     x.restore();
-    fillQuad(x, [[0, 16], [32, 32], [32, 32 + h], [0, 16 + h]], 'rgba(0,0,0,0.34)');
+    fillQuad(x, [[0, 16], [32, 32], [32, 32 + h], [0, 16 + h]], 'rgba(0,0,0,0.30)');
 
     // 右下侧面：origin(32,32)，u=(1,-0.5)，v=(0,h/32)
     x.save();
     x.setTransform(1, -0.5, 0, h / 32, 32, 32);
-    x.drawImage(tex, 0, 0, 32, 32);
+    x.drawImage(sideB, 0, 0, 32, 32);
     x.restore();
-    fillQuad(x, [[32, 32], [64, 16], [64, 16 + h], [32, 32 + h]], 'rgba(0,0,0,0.18)');
+    fillQuad(x, [[32, 32], [64, 16], [64, 16 + h], [32, 32 + h]], 'rgba(0,0,0,0.14)');
 
     // 顶面轮廓
     x.strokeStyle = 'rgba(0,0,0,0.20)';

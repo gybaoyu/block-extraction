@@ -28,12 +28,12 @@
     spider_eye:  { name: '蜘蛛眼', icon: ['spider_eye'], stack: 16, value: 7, tier: 2, kind: 'mat', desc: '有点恶心，但值钱。' },
 
     /* ---------- 武器 ---------- */
-    wood_sword:     { name: '木剑', icon: ['sword', 'wood'], stack: 1, value: 12, kind: 'weapon', wkind: 'melee', dmg: 4, cd: 0.40, range: 48, desc: '基地发的新手剑，别拿它打末影人。' },
-    iron_sword:     { name: '铁剑', icon: ['sword', 'iron'], stack: 1, value: 70, kind: 'weapon', wkind: 'melee', dmg: 6, cd: 0.42, range: 52, desc: '趁手。' },
-    diamond_sword:  { name: '钻石剑', icon: ['sword', 'diamond'], stack: 1, value: 220, kind: 'weapon', wkind: 'melee', dmg: 10, cd: 0.38, range: 56, desc: '切开僵尸像切豆腐。' },
-    netherite_sword:{ name: '下界合金剑', icon: ['sword', 'netherite'], stack: 1, value: 520, kind: 'weapon', wkind: 'melee', dmg: 14, cd: 0.34, range: 60, desc: '下界要塞特产，挥起来带风。' },
-    iron_pickaxe:   { name: '铁镐', icon: ['pickaxe', 'iron'], stack: 1, value: 50, kind: 'weapon', wkind: 'melee', dmg: 4, cd: 0.50, range: 46, mine: 1, desc: '能挖铁矿、金矿，打人一般。' },
-    diamond_pickaxe:{ name: '钻石镐', icon: ['pickaxe', 'diamond'], stack: 1, value: 160, kind: 'weapon', wkind: 'melee', dmg: 6, cd: 0.45, range: 46, mine: 2, desc: '能挖钻石矿和远古残骸。' },
+    wood_sword:     { name: '木剑', icon: ['sword', 'wood'], stack: 1, value: 12, kind: 'weapon', wkind: 'melee', dmg: 4, cd: 0.40, range: 64, desc: '基地发的新手剑，别拿它打末影人。' },
+    iron_sword:     { name: '铁剑', icon: ['sword', 'iron'], stack: 1, value: 70, kind: 'weapon', wkind: 'melee', dmg: 6, cd: 0.42, range: 68, desc: '趁手。' },
+    diamond_sword:  { name: '钻石剑', icon: ['sword', 'diamond'], stack: 1, value: 220, kind: 'weapon', wkind: 'melee', dmg: 10, cd: 0.38, range: 72, desc: '切开僵尸像切豆腐。' },
+    netherite_sword:{ name: '下界合金剑', icon: ['sword', 'netherite'], stack: 1, value: 520, kind: 'weapon', wkind: 'melee', dmg: 14, cd: 0.34, range: 78, desc: '下界要塞特产，挥起来带风。' },
+    iron_pickaxe:   { name: '铁镐', icon: ['pickaxe', 'iron'], stack: 1, value: 50, kind: 'weapon', wkind: 'melee', dmg: 4, cd: 0.50, range: 58, mine: 1, desc: '能挖铁矿、金矿，打人一般。' },
+    diamond_pickaxe:{ name: '钻石镐', icon: ['pickaxe', 'diamond'], stack: 1, value: 160, kind: 'weapon', wkind: 'melee', dmg: 6, cd: 0.45, range: 58, mine: 2, desc: '能挖钻石矿和远古残骸。' },
     bow:            { name: '弓', icon: ['bow'], stack: 1, value: 130, kind: 'weapon', wkind: 'bow', dmg: 8, cd: 0.75, projSpeed: 440, desc: '远程风筝，箭自带。' },
     crossbow:       { name: '弩', icon: ['crossbow'], stack: 1, value: 260, kind: 'weapon', wkind: 'bow', dmg: 16, cd: 1.10, projSpeed: 580, desc: '一箭一只蜘蛛。' },
 
@@ -58,13 +58,13 @@
 
   /* ---------- 敌人 ---------- */
   const enemies = {
-    zombie:   { name: '僵尸', hp: 16, dmg: 3, speed: 84, r: 13, sprite: 'zombie', ai: 'chase', cd: 0.95, drops: [['flesh', 0.5, 1, 2], ['iron_ingot', 0.12, 1, 1]], tier: 1 },
-    spider:   { name: '蜘蛛', hp: 10, dmg: 3, speed: 134, r: 12, sprite: 'spider', ai: 'chase', cd: 0.8, leap: 2.4, drops: [['string', 0.6, 1, 2], ['spider_eye', 0.15, 1, 1]], tier: 1 },
-    slime:    { name: '史莱姆', hp: 12, dmg: 3, speed: 60, r: 14, sprite: 'slime', ai: 'chase', cd: 1.0, split: true, drops: [['slime_ball', 0.0, 1, 1]], tier: 1 },
-    skeleton: { name: '骷髅', hp: 14, dmg: 4, speed: 70, r: 12, sprite: 'skeleton', ai: 'shooter', cd: 1.9, keep: 190, drops: [['bone', 0.7, 1, 2], ['arrow_item', 0.0, 1, 1]], tier: 2 },
-    creeper:  { name: '苦力怕', hp: 14, dmg: 11, speed: 90, r: 13, sprite: 'creeper', ai: 'bomber', cd: 99, fuse: 1.25, drops: [['gunpowder', 0.8, 1, 3]], tier: 2 },
-    enderman: { name: '末影人', hp: 26, dmg: 7, speed: 116, r: 13, sprite: 'enderman', ai: 'blink', cd: 1.0, blinkCd: 3.2, drops: [['pearl', 0.45, 1, 1], ['diamond', 0.12, 1, 1]], tier: 3 },
-    blaze:    { name: '烈焰人', hp: 20, dmg: 5, speed: 64, r: 13, sprite: 'blaze', ai: 'shooter', cd: 1.7, keep: 200, drops: [['quartz', 0.5, 1, 2], ['gold_ingot', 0.2, 1, 1]], tier: 3 },
+    zombie:   { name: '僵尸', hp: 16, dmg: 3, speed: 84, r: 13, sprite: 'zombie', ai: 'chase', cd: 1.4, drops: [['flesh', 0.5, 1, 2], ['iron_ingot', 0.12, 1, 1]], tier: 1 },
+    spider:   { name: '蜘蛛', hp: 10, dmg: 3, speed: 134, r: 12, sprite: 'spider', ai: 'chase', cd: 1.25, leap: 2.4, drops: [['string', 0.6, 1, 2], ['spider_eye', 0.15, 1, 1]], tier: 1 },
+    slime:    { name: '史莱姆', hp: 12, dmg: 3, speed: 60, r: 14, sprite: 'slime', ai: 'chase', cd: 1.45, split: true, drops: [['slime_ball', 0.0, 1, 1]], tier: 1 },
+    skeleton: { name: '骷髅', hp: 14, dmg: 4, speed: 70, r: 12, sprite: 'skeleton', ai: 'shooter', cd: 2.5, keep: 190, drops: [['bone', 0.7, 1, 2], ['arrow_item', 0.0, 1, 1]], tier: 2 },
+    creeper:  { name: '苦力怕', hp: 14, dmg: 11, speed: 90, r: 13, sprite: 'creeper', ai: 'bomber', cd: 99, fuse: 1.7, drops: [['gunpowder', 0.8, 1, 3]], tier: 2 },
+    enderman: { name: '末影人', hp: 26, dmg: 7, speed: 116, r: 13, sprite: 'enderman', ai: 'blink', cd: 1.5, blinkCd: 3.2, drops: [['pearl', 0.45, 1, 1], ['diamond', 0.12, 1, 1]], tier: 3 },
+    blaze:    { name: '烈焰人', hp: 20, dmg: 5, speed: 64, r: 13, sprite: 'blaze', ai: 'shooter', cd: 2.3, keep: 200, drops: [['quartz', 0.5, 1, 2], ['gold_ingot', 0.2, 1, 1]], tier: 3 },
     wither:   { name: '凋灵', hp: 220, dmg: 9, speed: 82, r: 24, sprite: 'wither', ai: 'boss', cd: 1.5, boss: true, drops: [['scrap', 1, 2, 3], ['diamond', 1, 2, 4]], tier: 4 },
   };
 

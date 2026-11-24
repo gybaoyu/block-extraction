@@ -160,10 +160,14 @@
         drawBlockAt(ctx, texName, tx * TILE + TILE / 2, ty * TILE + TILE / 2, WALL_H, alpha);
       } else if (it.kind === 'box') {
         const c = it.c;
-        const texName = c.type === 'chest' ? 'chest' : c.type === 'furnace' ? 'furnace' : 'crafting';
+        const topName = c.type === 'chest' ? 'chest' : c.type === 'furnace' ? 'furnace_top' : 'crafting';
+        const sideA = c.type === 'chest' ? 'chest_front' : c.type === 'furnace' ? 'furnace' : 'crafting_side';
+        const sideB = c.type === 'chest' ? 'chest_side' : c.type === 'furnace' ? 'furnace_side' : 'crafting_side';
         const s = proj(c.x, c.y);
         shadowEllipse(ctx, s.x, s.y + 6, 20, 9);
-        drawBlockAt(ctx, texName, c.x, c.y, BOX_H, c.opened ? 0.5 : 1);
+        ctx.globalAlpha = c.opened ? 0.5 : 1;
+        ctx.drawImage(P.isoBlock(topName, BOX_H, sideA, sideB), Math.round(s.x - 32), Math.round(s.y - 16 - BOX_H));
+        ctx.globalAlpha = 1;
         if (!c.opened) {
           const bob = Math.sin(g.time * 3 + c.x) * 1.5;
           ctx.globalAlpha = 0.8;
