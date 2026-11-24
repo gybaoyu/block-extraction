@@ -44,7 +44,7 @@
     MCX.UI.init(this);
     this.state = 'base';
     const params0 = new URLSearchParams(location.search);
-    if (params0.get('style') === '3d') MCX.PX.mobStyle = '3d';
+    if (params0.get('style') === '2d') MCX.PX.mobStyle = '2d';
     if (location.search.indexOf('smoke') >= 0) {
       // 冒烟测试：不启动 RAF，由 js/smoke.js 驱动 tick
       window.__MCX_READY = true;

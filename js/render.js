@@ -119,7 +119,7 @@
 
     // ---- 2. 墙体：整块「顶面 + 正面」，像真的立在地面上 ----
     const KY = E.Cam.KY;
-    const WALL_H = 40;                 // 墙面高度（屏幕像素）
+    const WALL_H = 56;                 // 墙面高度（屏幕像素）
     const faceTex = P.wallFace(g.world.wallTex, WALL_H);
     for (let ty = y0; ty <= y1; ty++) {
       for (let tx = x0; tx <= x1; tx++) {
@@ -137,6 +137,29 @@
           : (t === Wd.T.WALL ? P.wallVar(g.world.wallTex, (tx * 7 + ty * 13) % 3) : P.tile(Wd.texName(g.world, t)));
         // 顶面：整体上抬 WALL_H，看上去是“站在地上的方块”的上表面
         ctx.drawImage(topTex, sx, baseY - TILE - WALL_H / KY, TILE, TILE);
+        // 顶面描边：让每块砖都看得出是一块方块
+        ctx.strokeStyle = 'rgba(0,0,0,0.22)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(sx + 0.5, baseY - TILE - WALL_H / KY + 0.5, TILE - 1, TILE - 1);
+        // 侧面（贴墙的垂直面）：左右相邻是地面时给一条暗边，方块感更强
+        const westFloor = tx > 0 && !Wd.isSolidTile(g.world.tiles[i - 1]);
+        const eastFloor = tx < g.world.w - 1 && !Wd.isSolidTile(g.world.tiles[i + 1]);
+        if (westFloor || eastFloor) {
+          ctx.save();
+          ctx.translate(sx, baseY);
+          ctx.scale(1, 1 / KY);
+          if (westFloor) {
+            ctx.drawImage(faceTex, 0, 0, 7, WALL_H, 0, -WALL_H, 7, WALL_H);
+            ctx.fillStyle = 'rgba(0,0,0,0.30)';
+            ctx.fillRect(0, -WALL_H, 7, WALL_H);
+          }
+          if (eastFloor) {
+            ctx.drawImage(faceTex, 25, 0, 7, WALL_H, TILE - 7, -WALL_H, 7, WALL_H);
+            ctx.fillStyle = 'rgba(0,0,0,0.30)';
+            ctx.fillRect(TILE - 7, -WALL_H, 7, WALL_H);
+          }
+          ctx.restore();
+        }
         // 正面：只有南边是可走地面才画（朝镜头的一面）
         const southTile = ty + 1 < g.world.h ? g.world.tiles[i + g.world.w] : Wd.T.VOID;
         if (!Wd.isSolidTile(southTile) && southTile !== Wd.T.VOID) {
@@ -177,40 +200,49 @@
       }
     }
 
-    // 容器（贴图本身就是俯视方块，加一点“立起来”的厚度）
+    // 容器：画成有厚度的小方块（顶面 + 正面）
+    const CH = 14;
     for (const c of g.world.containers) {
       if (!g.world.seen[c.ty * g.world.w + c.tx]) continue;
       const texName = c.type === 'chest' ? 'chest' : c.type === 'furnace' ? 'furnace' : 'crafting';
+      const baseY = c.y + 16;
       ctx.save();
-      ctx.globalAlpha = c.opened ? 0.5 : 1;
-      shadowEllipse(ctx, c.x, c.y + 15, 14, 5);
-      ctx.drawImage(P.tile(texName), c.x - 16, c.y - 16);
+      ctx.globalAlpha = c.opened ? 0.45 : 1;
+      shadowEllipse(ctx, c.x, baseY + 1, 15, 5);
+      ctx.drawImage(P.tile(texName), c.x - 16, baseY - TILE - CH / E.Cam.KY, 32, 32);
+      ctx.translate(c.x - 16, baseY);
+      ctx.scale(1, 1 / E.Cam.KY);
+      ctx.drawImage(P.wallFace(texName, CH), 0, -CH, 32, CH);
       ctx.restore();
       if (!c.opened) {
         const bob = Math.sin(g.time * 3 + c.x) * 1.5;
         ctx.globalAlpha = 0.8;
         ctx.fillStyle = '#ffe066';
-        ctx.fillRect(c.x - 1, c.y - 30 + bob, 2, 2);
-        ctx.fillRect(c.x - 2.5, c.y - 31.5 + bob, 5, 1);
+        ctx.fillRect(c.x - 1, c.y - 34 + bob, 2, 2);
+        ctx.fillRect(c.x - 2.5, c.y - 35.5 + bob, 5, 1);
         ctx.globalAlpha = 1;
       }
     }
   }
 
   function srcPortal(ctx, x, y, t) {
-    // 简易下界传送门：黑紫方块 + 流动亮点
-    const w = 40, h = 52;
+    // 立起来的传送门：底部贴地，竖直方向不压缩
+    const w = 44, h = 56;
+    const KY = E.Cam.KY;
     ctx.save();
-    ctx.translate(x, y);
+    ctx.translate(x, y + 22);
+    ctx.scale(1, 1 / KY);
+    ctx.translate(-w / 2, -h);
+    const t0 = performance.now() / 1000;
     ctx.fillStyle = '#160b22';
-    ctx.fillRect(-w / 2, -h / 2, w, h);
+    ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = '#3a1a55';
     ctx.lineWidth = 3;
-    ctx.strokeRect(-w / 2, -h / 2, w, h);
+    ctx.strokeRect(0, 0, w, h);
     for (let i = 0; i < 8; i++) {
-      const a = t * 1.4 + i * 1.7;
-      const px = Math.sin(a) * 13;
-      const py = Math.cos(a * 1.3) * 20;
+      const a = (t || t0) * 1.4 + i * 1.7;
+      const px = w / 2 + Math.sin(a) * 13;
+      const py = h / 2 + Math.cos(a * 1.3) * 20;
       ctx.globalAlpha = 0.35 + 0.35 * Math.sin(a * 2);
       ctx.fillStyle = i % 2 ? '#b06ae8' : '#e0b0ff';
       const s = 3 + (i % 3);

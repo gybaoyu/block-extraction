@@ -1067,7 +1067,7 @@
    * 成功加载 assets/tex/*.png 就覆盖程序化像素图；任意一张失败自动回退
    * ============================================================ */
   P.assets = { items: {}, tiles: {}, mobs: {}, faces: {} };
-  P.mobStyle = '2d';
+  P.mobStyle = '3d';
   P.assetCount = 0;
   const assetURLs = new Map();
   const _itemSpec = P.itemSpec, _item = P.item, _itemURL = P.itemURL;
